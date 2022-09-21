@@ -1,14 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { dataToColorByteCode } from './colorByteCode';
+import ImageLoader from './ImageLoader';
 import SelectableCanvas from './SelectableCanvas';
-import {
-  createCanvas,
-  createCanvasFromImage,
-  createColorCode,
-  encodeImage,
-  getContext,
-} from './util';
+import { convertAreasForGridSize, encodeImage } from './converter';
+import { RectArea } from './types';
+import { createCanvasFromImage } from './utils';
 
-export type Area = [number, number, number, number];
+// export type Area = [number, number, number, number];
 export type Options = {
   gridSize: number;
   isReplacePosition: boolean;
@@ -21,8 +19,8 @@ const Encoder = () => {
   const [originalImageData, setOriginalImageData] = useState<null | ImageData>(
     null
   );
-  const [tmpArea, setTmpArea] = useState<null | Area>(null);
-  const [selectedAreas, setSelectedAreas] = useState<Area[]>([]);
+  const [tmpArea, setTmpArea] = useState<null | RectArea>(null);
+  const [selectedAreas, setSelectedAreas] = useState<RectArea[]>([]);
   const [isAddable, setIsAddable] = useState(false);
   const [minGridSize, setMinGridSize] = useState<number>(8);
 
@@ -46,30 +44,14 @@ const Encoder = () => {
   }, [originalImageData]);
 
   // 画像選択時
-  const onChangeImage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // 画像のロード
-    const reader = new FileReader();
-    if (e?.target?.files?.[0] == null) {
-      return;
-    }
-    reader.readAsDataURL(e.target.files[0]);
-    reader.onload = function () {
-      // データ読み込みが終わったら
-      const image = new Image();
-      image.src = reader.result as string;
-      // 画像への読み込みが終わったら
-      image.onload = () => {
-        const [cv, cx] = createCanvasFromImage(image);
-        // Stateに保存
-        setImageData(cx.getImageData(0, 0, cv.width, cv.height));
-        setOriginalImageData(cx.getImageData(0, 0, cv.width, cv.height));
-      };
-    };
+  const onChangeImage = (imageData: ImageData) => {
+    setImageData(imageData);
+    setOriginalImageData(imageData);
   };
 
   // 画像の範囲を選択したら
   const onSelectArea = useCallback(
-    (area: Area) => {
+    (area: RectArea) => {
       setTmpArea(area);
       setIsAddable(true);
     },
@@ -123,38 +105,18 @@ const Encoder = () => {
       hashKey
     );
 
-    // 範囲の個数分エンコードしたImageData作成
-    const encodedImageData = selectedAreas.reduce((p, v) => {
-      return encodeImage(p, v, options);
-    }, originalImageData);
-
-    // 画面下に追加する色コードのImageData作成
-    const colorCodeImageData = createColorCode(
-      [0, 0, originalImageData.width, originalImageData.height],
+    // エンコードの実施
+    const encodedImageData = encodeImage(
+      originalImageData,
       selectedAreas,
       options
     );
-
-    // 画像作成
-    const [cv, ctx] = createCanvas(
-      originalImageData.width,
-      originalImageData.height + colorCodeImageData.height
-    );
-
-    ctx.putImageData(encodedImageData, 0, 0);
-    ctx.putImageData(colorCodeImageData, 0, encodedImageData.height);
-    setImageData(ctx.getImageData(0, 0, cv.width, cv.height));
+    setImageData(encodedImageData);
   }, [selectedAreas, originalImageData]);
 
   return (
     <div>
-      <input
-        type="file"
-        id="INPUT_FILE"
-        name="inputFile"
-        accept="image/png, image/jpeg"
-        onChange={onChangeImage}
-      />
+      <ImageLoader onImageLoaded={onChangeImage} />
       <div
         style={{
           overflow: 'auto',

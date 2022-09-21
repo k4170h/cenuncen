@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Area } from './encoder';
-import { getContext } from './util';
+import { RectArea } from './types';
 
 type Props = {
   imageData: ImageData | null;
-  onSelectArea: (area: Area) => void;
+  onSelectArea: (area: RectArea) => void;
 };
 
 const SelectableCanvas = ({ imageData, onSelectArea }: Props) => {
@@ -73,7 +72,7 @@ const SelectableCanvas = ({ imageData, onSelectArea }: Props) => {
         <canvas
           ref={canvas}
           width="100"
-          height="00"
+          height="0"
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}
@@ -90,7 +89,7 @@ export default SelectableCanvas;
 const getSelectedArea = (
   start: [number, number],
   end: [number, number]
-): Area => {
+): RectArea => {
   return [
     Math.floor(start[0] < end[0] ? start[0] : end[0]),
     Math.floor(start[1] < end[1] ? start[1] : end[1]),
