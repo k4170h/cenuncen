@@ -108,7 +108,6 @@ const base64ToObj = (v: string): unknown => {
       );
       return ret;
     } catch (e) {
-      console.log('catch', v.slice(-(retry + 1)).slice(0, 1));
       // もし末端が"A"じゃなかったら本当のデコード失敗
       if (v.slice(-(retry + 1)).slice(0, 1) !== 'A') {
         throw new Error('Failed to decode');
@@ -135,7 +134,6 @@ const drawColorByteCodeBlock = (
   width: number
 ) => {
   // 印字するブロック数
-  // const blockCountX = Math.floor(width / blockWidth);
   const length = colorByteCodes.length + 0;
   const blockWidth = width / blockCountX;
 

@@ -1,5 +1,6 @@
 import React from 'react';
-import { createCanvasFromImage } from './utils';
+import { createCanvasFromImage } from '../utils';
+import Button from '@mui/material/Button';
 
 type Props = {
   onImageLoaded: (imageData: ImageData) => void;
@@ -27,9 +28,10 @@ const ImageLoader = ({ onImageLoaded }: Props) => {
   };
 
   return (
-    <div>
-      <input type="file" accept="image/*" onChange={onChangeImage} />
-    </div>
+    <Button variant="contained" component="label">
+      Select Image
+      <input type="file" accept="image/*" onChange={onChangeImage} hidden />
+    </Button>
   );
 };
 

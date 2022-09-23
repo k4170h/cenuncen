@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "watch": "webpack --config webpack/webpack.dev.js --watch",
+    "dev":"webpack --config webpack/webpack.dev.js",
     "build": "webpack --config webpack/webpack.prod.js",
     "clean": "rimraf dist",
     "test": "npx jest",
@@ -17,7 +18,11 @@
     "url": "https://github.com/chibat/chrome-extension-typescript-starter.git"
   },
   "dependencies": {
+    "@emotion/react": "^11.10.4",
+    "@emotion/styled": "^11.10.4",
     "@msgpack/msgpack": "^2.8.0",
+    "@mui/icons-material": "^5.10.6",
+    "@mui/material": "^5.10.6",
     "buffer": "^6.0.3",
     "jssha": "^3.2.0",
     "react": "^17.0.1",
