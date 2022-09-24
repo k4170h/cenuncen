@@ -1,12 +1,24 @@
-import { colorByteCodeToData, dataToColorByteCode } from './colorByteCode';
-import { Options, Pixel, PixelGroup, RectArea } from './types';
+import {
+  base64CharToNum,
+  dataToColorByteCode,
+  numToBase64Char,
+  toData,
+} from './colorByteCode';
+import {
+  DecodeOptions,
+  EncodeOptions,
+  Pixel,
+  PixelGroup,
+  RectArea,
+} from './types';
 import {
   createCanvas,
   createCanvasFromImage,
   createHash,
   generateNumArrByHash,
-  getContext,
 } from './utils';
+
+const DEFAULT_KEY = '74k4H1r0';
 
 /**
  * 引数のImageDataから [ピクセル数]*Pixel の2次元配列を作る
@@ -49,7 +61,6 @@ const pixelsToGroup = (
   h: number,
   gridWidth: number
 ): PixelGroup[] => {
-  console.log((w * h) / (gridWidth * gridWidth));
   const groups = new Array(Math.round((w * h) / (gridWidth * gridWidth)));
   // そのピクセル配列を s*s でグループ化
   for (let i = 0; i < h; i += gridWidth) {
@@ -145,12 +156,162 @@ const negaGroup = (group: PixelGroup, pattern = [1, 1, 1]) => {
     return negaPixel(pixel, pattern);
   });
 };
-const negaPixel = (pixel: Pixel, pattern = [1, 1, 1]) => {
+const negaPixel = (pixel: Pixel, pattern = [1, 1, 1]): Pixel => {
   return [
     pattern[0] ? 255 - pixel[0] : pixel[0],
     pattern[1] ? 255 - pixel[1] : pixel[1],
     pattern[2] ? 255 - pixel[2] : pixel[2],
   ];
+};
+
+// 画像が任意の色味になるように反転させる試み ここから
+
+// 代表色抽出
+const getGroupAvgColor = (group: PixelGroup): Pixel => {
+  const [r, g, b] = group.reduce(
+    (p, v) => [p[0] + v[0], p[1] + v[1], p[2] + v[2]],
+    [0, 0, 0]
+  );
+  return [r / group.length, g / group.length, b / group.length];
+};
+
+// 任意の色相になるように反転処理
+const negaColorGroups = (groups: PixelGroup[]): [PixelGroup[], string] => {
+  const retGroups = groups.map((v): [PixelGroup, number] => {
+    // 代表色を抽出
+    const colorMean = getGroupAvgColor(v);
+
+    const c = 1; // 現状 緑色固定
+    // 反転する色相を指定
+    const pattern = colorMean.map((v, i) => {
+      if (i === c) {
+        return v < 128 ? 1 : 0;
+      } else {
+        return v < 128 ? 0 : 1;
+      }
+    });
+
+    return [
+      v.map((_v) => {
+        return negaPixel(_v, pattern);
+      }),
+      pattern[0] * 4 + pattern[1] * 2 + pattern[2],
+    ];
+  });
+
+  return [
+    retGroups.map((v) => v[0]),
+    conv8toBase64(retGroups.map((v) => v[1])),
+  ];
+};
+
+// 任意の色相になるように反転されていたものを戻す処理
+const reNegaColorGroups = (
+  groups: PixelGroup[],
+  patterns: string
+): PixelGroup[] => {
+  // 反転色 抽出
+  const patternNums = convBase64to8(patterns);
+
+  return groups.map((v, i): PixelGroup => {
+    const p = ('000' + parseInt(patternNums[i] + '', 8).toString(2))
+      .slice(-3)
+      .split('')
+      .map((v) => parseInt(v));
+    return v.map((_v) => {
+      return negaPixel(_v, p);
+    });
+  });
+};
+
+// [0-7]の配列をBase64文字に圧縮する
+const conv8toBase64 = (arr: number[]) => {
+  let ret = '';
+  for (let i = 0; i < arr.length; i += 2) {
+    const n1 = arr[i];
+    const n2 = arr[i + 1] ? arr[i + 1] * 8 : 0;
+    ret = ret + numToBase64Char(n1 + n2);
+  }
+  return ret;
+};
+// Base64文字を[0-7]の配列に展開する
+const convBase64to8 = (str: string): number[] => {
+  return str.split('').reduce((p, c) => {
+    let num = base64CharToNum(c);
+    const n1 = num % 8;
+    num = Math.floor(num / 8);
+    const n2 = num % 8;
+    return [...p, n1, n2];
+  }, [] as number[]);
+};
+// 画像が任意の色味になるように反転させる試み ここまで
+
+// グループを回転する
+function rotateGroups(groups: PixelGroup[], hash: string) {
+  const hashNums = generateNumArrByHash(hash);
+  return groups.map((v, i) => {
+    const h = hashNums[i % hashNums.length] % 4;
+    return h === 0 ? v : rotateGroup(v, h as 1 | 2 | 3);
+  });
+}
+function rerotateGroups(groups: PixelGroup[], hash: string) {
+  const hashNums = generateNumArrByHash(hash);
+  return groups.map((v, i) => {
+    const h = hashNums[i % hashNums.length] % 4;
+    return h === 0 ? v : rotateGroup(v, (4 - h) as 1 | 2 | 3);
+  });
+}
+function rotateGroup(group: PixelGroup, angle: 1 | 2 | 3) {
+  const size = Math.sqrt(group.length);
+  const ret: PixelGroup = new Array(group.length);
+
+  for (let i = 0; i < size; i++) {
+    for (let j = 0; j < size; j++) {
+      switch (angle) {
+        case 1:
+          // 時計回りに90
+          ret[j * size + (size - i - 1)] = group[i * size + j];
+          break;
+        case 2:
+          // 時計回りに180
+          ret[(size - i - 1) * size + (size - j - 1)] = group[i * size + j];
+          break;
+        case 3:
+          // 時計回りに270
+          ret[(size - j - 1) * size + i] = group[i * size + j];
+          break;
+      }
+    }
+  }
+  return ret;
+}
+
+// グループを反転する
+const flipGroups = (groups: PixelGroup[], hash: string) => {
+  const hashNums = generateNumArrByHash(hash);
+  return groups.map((v, i) => {
+    const h = hashNums[i % hashNums.length] % 3;
+    return h === 0 ? v : flipGroup(v, h as 1 | 2);
+  });
+};
+const flipGroup = (group: PixelGroup, mode: 1 | 2) => {
+  const size = Math.sqrt(group.length);
+  const ret: PixelGroup = new Array(group.length);
+  for (let i = 0; i < size; i++) {
+    for (let j = 0; j < size; j++) {
+      switch (mode) {
+        case 1:
+          // 水平反転
+          ret[i * size + (size - j - 1)] = group[i * size + j];
+          break;
+        case 2:
+          // 垂直反転
+          ret[(size - i - 1) * size + j] = group[i * size + j];
+          break;
+      }
+    }
+  }
+  return ret;
 };
 
 /**
@@ -198,15 +359,13 @@ function fillGridLine(
 }
 
 /**
- * 
-/**
  * グリッドの収まる矩形の外側を補完する。
  * @param imageData 大本の画像
  * @param x 矩形の範囲
- * @param y 
- * @param w 
- * @param h 
- * @returns 
+ * @param y
+ * @param w
+ * @param h
+ * @returns
  */
 function fillGridOutLine(
   imageData: ImageData,
@@ -290,7 +449,7 @@ export const convertAreasForGridSize = (
 export const encodeImage = (
   imageData: ImageData,
   areas: RectArea[],
-  options: Options
+  options: EncodeOptions
 ) => {
   // 範囲をgirdSizeで割り切れるサイズに補正
   const resizedAreas = convertAreasForGridSize(
@@ -301,24 +460,25 @@ export const encodeImage = (
   );
 
   // 範囲の個数分エンコードしたImageData作成
-  const encodedImageData = resizedAreas.reduce((p, v) => {
-    return encodeArea(p, v, options);
-  }, imageData);
+  const [encodedImageData, retObj] = resizedAreas.reduce(
+    (p: [ImageData, any[]], v) => {
+      const ret = encodeArea(p[0], v, options);
+      return [ret[0], [...p[1], ret[1]]];
+    },
+    [imageData, []]
+  );
 
   // 画面下に追加する色バイトコードのImageData作成
-  const data = {
-    v: 1,
-    w: imageData?.width,
-    h: imageData?.height,
-    o: {
-      k: options.hashKey != null ? 1 : 0,
-      r: options.isReplacePosition ? 1 : 0,
-      c: options.isChangeColor ? 1 : 0,
-      g: options.gridSize,
-    },
-    c: resizedAreas,
-  };
-
+  const data = toData(
+    options,
+    resizedAreas,
+    [imageData.width, imageData.height],
+    {
+      negaColorMap: retObj[0].negaColorMap
+        ? retObj.map((v) => v.negaColorMap)
+        : undefined,
+    }
+  );
   const colorByteCodeImageData = dataToColorByteCode(
     data,
     imageData.width,
@@ -343,10 +503,14 @@ export const encodeImage = (
  * @param options
  * @returns
  */
-const encodeArea = (imageData: ImageData, area: RectArea, options: Options) => {
-  console.log('start encode Image');
+const encodeArea = (
+  imageData: ImageData,
+  area: RectArea,
+  options: EncodeOptions
+): [ImageData, any] => {
   const [, ctx] = createCanvasFromImage(imageData);
   const [cx, cy, cw, ch] = [...area];
+  const retObj = {} as any;
 
   // 対象範囲を切り取ってピクセル配列を作る
   const beforePixels = imageDataToPixelArray(ctx.getImageData(cx, cy, cw, ch));
@@ -354,16 +518,25 @@ const encodeArea = (imageData: ImageData, area: RectArea, options: Options) => {
   // そのピクセル配列を gridSize でグループ化
   let pixelBlocks = pixelsToGroup(beforePixels, cw, ch, options.gridSize);
 
-  const hash = createHash(options.hashKey ?? 'TEST');
+  const hash = createHash(options.hashKey ?? DEFAULT_KEY);
 
   // グループを並べ替え
-  if (options.isReplacePosition) {
+  if (options.isSwap) {
     pixelBlocks = sortByHash(pixelBlocks as [], hash);
   }
 
+  // ハッシュで回転(90度ずつ),反転
+  if (options.isRotate) {
+    pixelBlocks = rotateGroups(pixelBlocks, hash);
+    pixelBlocks = flipGroups(pixelBlocks, hash);
+  }
+
   // ハッシュ値で色反転
-  if (options.isChangeColor) {
-    pixelBlocks = negaGroups(pixelBlocks, hash);
+  if (options.isNega) {
+    // pixelBlocks = negaGroups(pixelBlocks, hash);
+    const negad = negaColorGroups(pixelBlocks);
+    pixelBlocks = negad[0];
+    retObj['negaColorMap'] = negad[1];
   }
 
   // グループをピクセルに展開
@@ -374,7 +547,7 @@ const encodeArea = (imageData: ImageData, area: RectArea, options: Options) => {
   const [baseCv, baseCx] = createCanvasFromImage(imageData);
   baseCx.putImageData(encodedImageData, cx, cy);
 
-  return baseCx.getImageData(0, 0, baseCv.width, baseCv.height);
+  return [baseCx.getImageData(0, 0, baseCv.width, baseCv.height), retObj];
 };
 
 /**
@@ -384,22 +557,26 @@ const encodeArea = (imageData: ImageData, area: RectArea, options: Options) => {
  * @param options
  * @returns
  */
-export const decodeImage = (imageData: ImageData) => {
-  // 画像下部のカラーバイトコードを読む
-  const data = colorByteCodeToData(imageData);
-
-  // 画像をareasの逆順に
-  const options: Options = {
-    gridSize: (data as any).o.g,
-    hashKey: (data as any).o.k,
-    isChangeColor: (data as any).o.c,
-    isReplacePosition: (data as any).o.r,
-  };
-
-  const decodedImageData = (data as any).c
+export const decodeImage = (
+  imageData: ImageData,
+  areas: RectArea[],
+  encodeOptions: EncodeOptions,
+  decodeOptions: DecodeOptions,
+  size: [number, number],
+  optionalData: any
+) => {
+  const decodedImageData = areas
+    .map((v) => v)
     .reverse()
-    .reduce((p: ImageData, c: RectArea) => {
-      return decodeArea(p, c, options, (data as any).w, (data as any).h);
+    .reduce((p: ImageData, c: RectArea, i_) => {
+      return decodeArea(
+        p,
+        c,
+        encodeOptions,
+        decodeOptions,
+        size,
+        optionalData[areas.length - i_ - 1]
+      );
     }, imageData);
 
   return decodedImageData;
@@ -417,12 +594,14 @@ export const decodeImage = (imageData: ImageData) => {
 const decodeArea = (
   imageData: ImageData,
   area: RectArea,
-  options: Options,
-  width: number,
-  height: number
+  encodeOptions: EncodeOptions,
+  decodeOptions: DecodeOptions,
+  size: [number, number],
+  optionalData: any
 ) => {
-  // 対象エリア切り抜き
+  const width = size[0];
 
+  // 対象エリア切り抜き
   const [cv, ctx] = createCanvasFromImage(imageData);
   const [originalCv, originalCtx] = createCanvas(area[2], area[3]);
 
@@ -430,8 +609,6 @@ const decodeArea = (
   // 切り出した範囲を元のサイズに。グリッドサイズ、グリッド数を整数で扱いたい
   const scale = imageData.width / width;
   const [x, y, w, h] = area.map((v) => v * scale);
-  console.log('scale', scale, 1 / scale);
-  console.log('resized area', [x, y, w, h]);
 
   // 切り出した範囲をリサイズして oroginal に貼り付け
   originalCtx.scale(1 / scale, 1 / scale);
@@ -441,8 +618,6 @@ const decodeArea = (
     0
   );
 
-  console.log('original size', originalCv.width, originalCv.height);
-
   // 該当範囲をグループ分け
   const beforePixels = imageDataToPixelArray(
     originalCtx.getImageData(0, 0, area[2], area[3])
@@ -451,19 +626,26 @@ const decodeArea = (
     beforePixels,
     area[2],
     area[3],
-    options.gridSize
+    encodeOptions.gridSize
   );
 
   // ハッシュ作成
-  const hash = createHash(options.hashKey ?? 'TEST');
+  const hash = createHash(decodeOptions.hashKey ?? DEFAULT_KEY);
 
   // ハッシュ値で色反転
-  if (options.isChangeColor) {
-    pixelBlocks = negaGroups(pixelBlocks, hash);
+  if (encodeOptions.isNega) {
+    // pixelBlocks = negaGroups(pixelBlocks, hash);
+    pixelBlocks = reNegaColorGroups(pixelBlocks, optionalData.negaColorMap);
+  }
+
+  // ハッシュで回転(90度ずつ),反転
+  if (encodeOptions.isRotate) {
+    pixelBlocks = flipGroups(pixelBlocks, hash);
+    pixelBlocks = rerotateGroups(pixelBlocks, hash);
   }
 
   // グループを並べ替え
-  if (options.isReplacePosition) {
+  if (encodeOptions.isSwap) {
     pixelBlocks = resortByHash(pixelBlocks, hash);
   }
 
@@ -472,7 +654,7 @@ const decodeArea = (
     pixelBlocks,
     area[2],
     area[3],
-    options.gridSize
+    encodeOptions.gridSize
   );
   const decodedImageData = pixelArrayToImageData(
     decodedPixel,
@@ -480,53 +662,68 @@ const decodeArea = (
     area[3]
   );
 
-  // ピクセルをリサイズして貼り付け
+  // 隠蔽範囲をリサイズして貼り付けるか
   if (width === imageData.width) {
     // 原寸大ならそのまま貼り付け
-    ctx.drawImage(createCanvasFromImage(decodedImageData)[0], area[0], area[1]);
+
+    if (decodeOptions.isJuggle) {
+      // 補完して貼り付け
+      ctx.drawImage(
+        createCanvasFromImage(
+          fillGridLine(
+            decodedImageData,
+            encodeOptions.gridSize,
+            Math.ceil(1 / scale)
+          )
+        )[0],
+        area[0],
+        area[1]
+      );
+    } else {
+      // そのまま貼り付け
+      ctx.drawImage(
+        createCanvasFromImage(decodedImageData)[0],
+        area[0],
+        area[1]
+      );
+    }
   } else {
     // リサイズ画像なら元のサイズにして貼り付け
+    if (decodeOptions.isJuggle) {
+      // 貼り付け先の境界線をごまかす(ちょっと大きめにとる)
+      const ib = fillGridOutLine(
+        ctx.getImageData(0, 0, cv.width, cv.height),
+        Math.round(area[0] * scale) - 1,
+        Math.round(area[1] * scale) - 1,
+        Math.round(area[2] * scale) + 2,
+        Math.round(area[3] * scale) + 2
+      );
+      ctx.putImageData(ib, 0, 0);
 
-    // 貼り付け先の境界線をごまかす(ちょっと大きめにとる)
-    const ib = fillGridOutLine(
-      ctx.getImageData(0, 0, cv.width, cv.height),
-      Math.round(area[0] * scale) - 1,
-      Math.round(area[1] * scale) - 1,
-      Math.round(area[2] * scale) + 2,
-      Math.round(area[3] * scale) + 2
-    );
-    ctx.putImageData(ib, 0, 0);
+      // 貼り付け対象はリサイズして貼り付け
+      ctx.scale(scale, scale);
 
-    ctx.scale(scale, scale);
-    // 貼り付け画像内の劣化している箇所をごまかしてから貼り付ける
-    //*
-    ctx.drawImage(
-      createCanvasFromImage(
-        fillGridLine(
-          decodedImageData,
-          options.gridSize,
-          Math.ceil(1 / scale) + 1
-        )
-      )[0],
-      area[0],
-      area[1]
-    );
-    /*/
-    ctx.drawImage(createCanvasFromImage(decodedImageData)[0], area[0], area[1]);
-    //*/
+      // 貼り付け画像内の劣化している箇所をごまかしてから貼り付ける
+      ctx.drawImage(
+        createCanvasFromImage(
+          fillGridLine(
+            decodedImageData,
+            encodeOptions.gridSize,
+            Math.ceil(1 / scale)
+          )
+        )[0],
+        area[0],
+        area[1]
+      );
+    } else {
+      // 貼り付け対象はリサイズして貼り付け
+      ctx.scale(scale, scale);
+      ctx.drawImage(
+        createCanvasFromImage(decodedImageData)[0],
+        area[0],
+        area[1]
+      );
+    }
   }
-
-  // const testCV = document.querySelector('#BOARD1');
-  // const testCTX = getContext(testCV as any);
-  // testCTX.putImageData(
-  //   fillGridLine(decodedImageData, options.gridSize, Math.ceil(1 / scale) + 1),
-  //   0,
-  //   0
-  // );
-  // const testCV2 = document.querySelector('#BOARD2');
-  // const testCTX2 = getContext(testCV2 as any);
-  // testCTX2.putImageData(decodedImageData, 0, 0);
-
-  // ctx.putImageData(decodedImageData, area[0], area[1])
   return ctx.getImageData(0, 0, cv.width, cv.height);
 };

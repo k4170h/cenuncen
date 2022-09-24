@@ -2,7 +2,7 @@
 import { createCanvas } from './utils';
 import { Buffer } from 'buffer';
 import { decode, encode } from '@msgpack/msgpack';
-import { Pixel } from './types';
+import { EncodeOptions, Pixel, RectArea } from './types';
 
 const R_CHANNEL_PARTITION = 4;
 const G_CHANNEL_PARTITION = 4;
@@ -30,13 +30,13 @@ if (ImageData.prototype.getPixelColor === undefined) {
 }
 
 // Base64文字を数値に変換する
-const base64CharToNum = (char: string) =>
+export const base64CharToNum = (char: string) =>
   BASE64_TABLE.findIndex((v) => v === char);
 // Base64文字列を色配列に変換する
 const base64StringToColors = (str: string): Pixel[] =>
   str.split('').map((v) => numToColor(base64CharToNum(v)));
 // 数値をBase64文字に変換する
-const numToBase64Char = (index: number) => BASE64_TABLE[index];
+export const numToBase64Char = (index: number) => BASE64_TABLE[index];
 // 色配列をBase64文字列に変換する
 const colorsToBase64String = (colors: Pixel[]) =>
   colors.reduce((p, c) => p + numToBase64Char(colorToNum(c)), '');
@@ -138,13 +138,14 @@ const drawColorByteCodeBlock = (
   const blockWidth = width / blockCountX;
 
   // 最下段にデコード用の情報を入れる
-  // 左から ブロック数/行(の1バイト)、ブロック数(2バイト) ... 右端にブロック数/行(の１バイト)
+  // 左から ブロック数/行(の1バイト)、バージョン(1バイト)、ブロック数(2バイト) ... 右端にブロック数/行(の１バイト)
   // デコード時には 最初に左下端と右下端の情報から ブロック数/行 を算出したあと、ブロック数を取り出し、本データを取り始める
   console.log('blockCountX', blockCountX);
   // 左端にデータを挿入
-  colorByteCodes.unshift(numToColor(Math.floor(length / 64)));
-  colorByteCodes.unshift(numToColor(length % 64));
-  colorByteCodes.unshift(numToColor(Math.floor(blockCountX / 64)));
+  colorByteCodes.unshift(numToColor(Math.floor(length / 64))); // ブロック数
+  colorByteCodes.unshift(numToColor(length % 64)); // ブロック数
+  colorByteCodes.unshift(numToColor(1)); // バージョン
+  colorByteCodes.unshift(numToColor(Math.floor(blockCountX / 64))); // ブロック数/行(の1バイト)
 
   // 最初の行の右端にデータを挿入
   if (colorByteCodes.length < blockCountX - 1) {
@@ -191,14 +192,22 @@ const readColorByteCode = (imageData: ImageData) => {
   const blockCountX = lNum * 64 + rNum;
   const blockWidth = imageData.width / blockCountX;
 
-  console.log(blockCountX);
+  // バージョンを拾う
+  const version = colorToNum(
+    imageData.getPixelColor(
+      blockWidth + blockWidth / 2,
+      imageData.height - blockWidth / 2
+    )
+  );
+
+  // 以降は バージョン=1 の読み込み方法
+  // もし別バージョンのカラーバイトコードを編み出したらここを分岐させる
 
   // ブロック数を拾う
   const blockCountData = [
-    [blockWidth * 1 + blockWidth / 2, imageData.height - blockWidth / 2],
     [blockWidth * 2 + blockWidth / 2, imageData.height - blockWidth / 2],
+    [blockWidth * 3 + blockWidth / 2, imageData.height - blockWidth / 2],
   ].map((v) => {
-    console.log('color', v[0], v[1], imageData.getPixelColor(v[0], v[1]));
     return colorToNum(imageData.getPixelColor(v[0], v[1]));
   });
   // ブロック数
@@ -206,26 +215,25 @@ const readColorByteCode = (imageData: ImageData) => {
 
   // 読み込みの開始
   const colors = [];
-  // 4 は上記の固定データ数
-  for (let i = 0; i < blockCount + 4; i++) {
+  // 5 は上記の固定データ数
+  for (let i = 0; i < blockCount + 5; i++) {
     const x = (i % blockCountX) * blockWidth + blockWidth / 2;
     const y =
       imageData.height -
       Math.floor(i / blockCountX) * blockWidth -
       blockWidth / 2;
-    // console.log(x, y)
     colors.push(imageData.getPixelColor(x, y));
   }
 
   // 本データの切り抜き
   let mainColors = [];
-  if (blockCount + 3 < blockCountX) {
+  if (blockCount + 4 < blockCountX) {
     // データが1行なら
-    mainColors = colors.slice(3, 3 + blockCount);
+    mainColors = colors.slice(4, 4 + blockCount);
   } else {
     // データが2行以上なら
     mainColors = [
-      ...colors.slice(3, blockCountX - 1),
+      ...colors.slice(4, blockCountX - 1),
       ...colors.slice(blockCountX),
     ];
   }
@@ -252,8 +260,6 @@ export const dataToColorByteCode = (
   );
   const blockCountX = Math.floor(width / blockWidth);
 
-  console.log(byte64Str);
-
   // 印字
   const colorByteCodeImageData = drawColorByteCodeBlock(
     colorByteCodes,
@@ -262,53 +268,57 @@ export const dataToColorByteCode = (
   );
 
   return colorByteCodeImageData;
-  // 暫定
-  const canvas = document.querySelector('#BOARD');
-  (canvas as HTMLCanvasElement).width = 1200;
-  (canvas as HTMLCanvasElement).height = 200;
-
-  const context = (canvas as HTMLCanvasElement).getContext('2d');
-
-  context?.putImageData(colorByteCodeImageData, 0, 0);
 };
 
 // カラーバイトコードを読む
-export const colorByteCodeToData = (imageData: ImageData): unknown => {
+export const colorByteCodeToData = (imageData: ImageData) => {
   const colors = readColorByteCode(imageData);
   const base64String = colorsToBase64String(colors);
   const data = base64ToObj(base64String);
-  console.log(data);
-  return data;
+  return fromData(data);
 };
 
-/*
-const data = {
-  v: 1,
-  o: {
-    s: 1,
-    z: 1,
-  },
-  c: [
-    [1, 1, 20, 20],
-    [1, 1, 20, 20],
-    [1, 1, 20, 20],
-    [1, 1, 20, 20],
-  ]
+export const fromData = (
+  data: any
+): {
+  encodeOptions: EncodeOptions;
+  areas: RectArea[];
+  size: [number, number];
+  optionalData: any;
+} => {
+  return {
+    encodeOptions: {
+      gridSize: data.o.g,
+      isSwap: data.o.s,
+      isRotate: data.o.r,
+      isNega: data.o.n,
+      hashKey: data.o.k ? 'dummy' : null,
+    },
+    areas: data.c,
+    size: [data.w, data.h],
+    optionalData: new Array(data.c.length).fill(null).map((_, i) => ({
+      negaColorMap: data.o.n_[i],
+    })),
+  };
+};
 
-}
-const text = JSON.stringify(data)
-
-
-const printData = objToBase64(data)
-
-console.log("encoded data", printData);
-console.log("decoded data", base64ToObj(printData))
-
-// console.log(createColorByteCode(data, 1200, 1600))
-
-const testText = 'abcdefg';
-for (let i = 0; i < 3; i++) {
-  console.log(testText.slice(-(i + 1)).slice(0, 1))
-  console.log(testText.slice(0, testText.length - i - 1) + new Array(i + 1).fill('0').reduce((p, c) => p + c, ''))
-}
-*/
+export const toData = (
+  encodeOptions: EncodeOptions,
+  areas: RectArea[],
+  size: [number, number],
+  optionalData: any
+) => {
+  return {
+    w: size[0],
+    h: size[1],
+    o: {
+      k: encodeOptions.hashKey != null ? 1 : 0,
+      s: encodeOptions.isSwap ? 1 : 0,
+      n: encodeOptions.isNega ? 1 : 0,
+      n_: optionalData.negaColorMap ? optionalData.negaColorMap : undefined,
+      g: encodeOptions.gridSize,
+      r: encodeOptions.isRotate ? 1 : 0,
+    },
+    c: areas,
+  };
+};

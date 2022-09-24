@@ -87,3 +87,12 @@ export const generateNumArrByHash = (hash: string, range = 16): number[] => {
     return parseInt(v, 16) * Math.ceil(range / 16);
   });
 };
+
+// v の最寄りの p の倍数を取得する
+export const getNear = (v: number, m: number) => {
+  return m * Math.round(v / m);
+};
+
+export const getNearCeil = (v: number, m: number) => {
+  return m * Math.ceil(v / m);
+};

@@ -2,7 +2,12 @@ import styled from '@emotion/styled';
 import { Box, Button, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RectArea } from '../types';
-import { createCanvas, createCanvasFromImage, getContext } from '../utils';
+import {
+  createCanvas,
+  createCanvasFromImage,
+  getContext,
+  getNear,
+} from '../utils';
 
 const CanvasWrapper = styled(Box)({
   backgroundColor: '#ccc',
@@ -68,7 +73,10 @@ const SelectableCanvas = ({
       setMouseDown(true);
       // ドラッグ開始地点記録
       const rect = (e.target as HTMLElement).getBoundingClientRect();
-      setStartPos([e.clientX - rect.left, e.clientY - rect.top]);
+      setStartPos([
+        getNear(e.clientX - rect.left, 8),
+        getNear(e.clientY - rect.top, 8),
+      ]);
     },
     []
   );
@@ -82,7 +90,7 @@ const SelectableCanvas = ({
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        setEndPos([x, y]);
+        setEndPos([getNear(x, 8), getNear(y, 8)]);
 
         if (baseImageData == null) {
           throw new Error();
@@ -100,7 +108,11 @@ const SelectableCanvas = ({
         const ptn = getPattern(ctx);
         ctx.strokeStyle = ptn;
         ctx.lineWidth = 1;
-        ctx.strokeRect(...startPos, x - startPos[0], y - startPos[1]);
+        ctx.strokeRect(
+          ...startPos,
+          getNear(x - startPos[0], 8),
+          getNear(y - startPos[1], 8)
+        );
       }
     },
     [startPos, mouseDown, baseImageData]

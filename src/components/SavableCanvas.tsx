@@ -27,7 +27,7 @@ const SavableCanvas = ({ imageData }: Props) => {
       canvas.current.width = imageData.width;
       canvas.current.height = imageData.height;
       getContext(canvas.current).putImageData(imageData, 0, 0);
-      setJpg(canvas.current.toDataURL('image/jpeg'));
+      setJpg(canvas.current.toDataURL('image/jpeg', 0.9));
       setPng(canvas.current.toDataURL('image/png'));
     }
   }, [imageData]);
@@ -96,6 +96,7 @@ const SavableCanvas = ({ imageData }: Props) => {
               variant="contained"
               size="small"
               disabled={png == null}
+              href={png == null ? '' : png}
               download="image"
               style={{
                 display: 'block',

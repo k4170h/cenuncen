@@ -2,14 +2,16 @@ import React, { useCallback, useEffect, useState } from 'react';
 import ImageLoader from './ImageLoader';
 import SelectableCanvas from './SelectableCanvas';
 import { encodeImage } from '../converter';
-import { Options, RectArea } from '../types';
+import { EncodeOptions, RectArea } from '../types';
 import SelectedAreaList from './SelectedAreaList';
 import EncodeForm from './EncodeForm';
 import { Box } from '@mui/material';
 import SavableCanvas from './SavableCanvas';
 
 const Encoder = () => {
-  const [imageData, setImageData] = useState<null | ImageData>(null);
+  const [encodedImageData, setEncodedImageData] = useState<null | ImageData>(
+    null
+  );
   const [originalImageData, setOriginalImageData] = useState<null | ImageData>(
     null
   );
@@ -30,7 +32,7 @@ const Encoder = () => {
 
   // 画像選択時
   const onChangeImage = (imageData: ImageData) => {
-    setImageData(null);
+    setEncodedImageData(null);
     setOriginalImageData(imageData);
     setSelectedAreas([]);
   };
@@ -45,7 +47,7 @@ const Encoder = () => {
 
   // エンコードを行う
   const encode = useCallback(
-    (options: Options) => {
+    (options: EncodeOptions) => {
       if (originalImageData == null) {
         throw new Error();
       }
@@ -56,7 +58,7 @@ const Encoder = () => {
         selectedAreas,
         options
       );
-      setImageData(encodedImageData);
+      setEncodedImageData(encodedImageData);
     },
     [selectedAreas, originalImageData]
   );
@@ -96,7 +98,7 @@ const Encoder = () => {
           overflow: 'auto',
         }}
       >
-        <SavableCanvas {...{ imageData }} />
+        <SavableCanvas imageData={encodedImageData} />
       </Box>
     </Box>
   );
