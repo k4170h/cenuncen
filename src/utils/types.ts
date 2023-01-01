@@ -15,10 +15,8 @@ export type EncodeOptions = {
 };
 
 export type DecodeOptions = {
-  // 補正するか
-  isJuggle: boolean;
   // 鍵が必要か
-  hashKey: string | null;
+  hashKey?: string;
 };
 
 /**

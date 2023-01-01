@@ -1,17 +1,16 @@
 // 画像下にくっつけるカラーバイトコードに関する関数群
-import { createCanvas } from './utils';
+import { createCanvas } from './canvasUtils';
 import { Buffer } from 'buffer';
 import { decode, encode } from '@msgpack/msgpack';
 import { EncodeOptions, Pixel, RectArea } from './types';
+import {
+  MIN_COLOR_BYTE_BLOCK_WIDTH,
+  MIN_RESIZED_IMAGE_WIDTH,
+} from './definition';
 
 const R_CHANNEL_PARTITION = 4;
 const G_CHANNEL_PARTITION = 4;
 const B_CHANNEL_PARTITION = 4;
-
-// 描画するカラーバイトコードのブロックサイズ
-// 画像の長辺が MIN_IMAGE_WIDTH px までリサイズされたときに MIN_BLOCK_WIDTH px になる大きさ
-const MIN_IMAGE_WIDTH = 600;
-const MIN_BLOCK_WIDTH = 8;
 
 const BASE64_TABLE =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='.split('');
@@ -110,11 +109,11 @@ const base64ToObj = (v: string): unknown => {
     } catch (e) {
       // もし末端が"A"じゃなかったら本当のデコード失敗
       if (v.slice(-(retry + 1)).slice(0, 1) !== 'A') {
-        throw new Error('Failed to decode');
+        throw new Error('Failed to decode.invalid color byte code.');
       }
       // 念のため
       if (retry > 4) {
-        throw new Error('Failed to decode');
+        throw new Error('Failed to decode.invalid color byte code.');
       }
 
       // 末端の"A"が"="の可能性を試す
@@ -140,7 +139,7 @@ const drawColorByteCodeBlock = (
   // 最下段にデコード用の情報を入れる
   // 左から ブロック数/行(の1バイト)、バージョン(1バイト)、ブロック数(2バイト) ... 右端にブロック数/行(の１バイト)
   // デコード時には 最初に左下端と右下端の情報から ブロック数/行 を算出したあと、ブロック数を取り出し、本データを取り始める
-  console.log('blockCountX', blockCountX);
+
   // 左端にデータを挿入
   colorByteCodes.unshift(numToColor(Math.floor(length / 64))); // ブロック数
   colorByteCodes.unshift(numToColor(length % 64)); // ブロック数
@@ -150,10 +149,12 @@ const drawColorByteCodeBlock = (
   // 最初の行の右端にデータを挿入
   if (colorByteCodes.length < blockCountX - 1) {
     // 無意味なデータを埋めて横幅一杯にして埋め込む
+    // colorByteCodes.push(
+    //   ...new Array(blockCountX - colorByteCodes.length - 1).fill([
+    //     255, 255, 255,
+    //   ])
     colorByteCodes.push(
-      ...new Array(blockCountX - colorByteCodes.length - 1).fill([
-        255, 255, 255,
-      ])
+      ...new Array(blockCountX - colorByteCodes.length - 1).fill(null)
     );
     colorByteCodes.push(numToColor(blockCountX % 64));
   } else {
@@ -172,6 +173,9 @@ const drawColorByteCodeBlock = (
 
   // 印字していく
   colorByteCodes.forEach((v, i) => {
+    if (v == null) {
+      return;
+    }
     const x = (i % blockCountX) * blockWidth;
     const y = (blockCountY - Math.floor(i / blockCountX) - 1) * blockWidth;
     ctx.fillStyle = `rgb(${v[0]},${v[1]},${v[2]})`;
@@ -253,10 +257,10 @@ export const dataToColorByteCode = (
   const colorByteCodes = base64StringToColors(byte64Str);
 
   // 1行あたりのブロック数
-  // 画像の長辺が MIN_IMAGE_WIDTH px までリサイズされたときに MIN_BLOCK_WIDTH px になる大きさ
+  // 画像の長辺が MIN_RESIZED_IMAGE_WIDTH px までリサイズされたときに MIN_BLOCK_WIDTH px になる大きさ
   const longStroke = width < height ? height : width;
   const blockWidth = Math.ceil(
-    (MIN_BLOCK_WIDTH * longStroke) / MIN_IMAGE_WIDTH
+    (MIN_COLOR_BYTE_BLOCK_WIDTH * longStroke) / MIN_RESIZED_IMAGE_WIDTH
   );
   const blockCountX = Math.floor(width / blockWidth);
 
@@ -283,8 +287,7 @@ export const fromData = (
 ): {
   encodeOptions: EncodeOptions;
   areas: RectArea[];
-  size: [number, number];
-  optionalData: any;
+  size: [number, number, number];
 } => {
   return {
     encodeOptions: {
@@ -295,27 +298,23 @@ export const fromData = (
       hashKey: data.o.k ? 'dummy' : null,
     },
     areas: data.c,
-    size: [data.w, data.h],
-    optionalData: new Array(data.c.length).fill(null).map((_, i) => ({
-      negaColorMap: data.o.n_[i],
-    })),
+    size: data.s,
   };
 };
 
 export const toData = (
   encodeOptions: EncodeOptions,
   areas: RectArea[],
-  size: [number, number],
-  optionalData: any
+  size: [number, number, number]
 ) => {
   return {
-    w: size[0],
-    h: size[1],
+    // w: size[0],
+    // h: size[1],
+    s: size,
     o: {
       k: encodeOptions.hashKey != null ? 1 : 0,
       s: encodeOptions.isSwap ? 1 : 0,
       n: encodeOptions.isNega ? 1 : 0,
-      n_: optionalData.negaColorMap ? optionalData.negaColorMap : undefined,
       g: encodeOptions.gridSize,
       r: encodeOptions.isRotate ? 1 : 0,
     },

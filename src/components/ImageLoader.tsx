@@ -1,12 +1,14 @@
-import React from 'react';
-import { createCanvasFromImage } from '../utils';
+import React, { useCallback, useRef } from 'react';
 import Button from '@mui/material/Button';
+import { createCanvasFromImage } from '../utils/canvasUtils';
 
 type Props = {
   onImageLoaded: (imageData: ImageData) => void;
 };
 
 const ImageLoader = ({ onImageLoaded }: Props) => {
+  const input = useRef<HTMLInputElement>(null);
+
   // 画像選択時
   const onChangeImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     // 画像のロード
@@ -27,11 +29,25 @@ const ImageLoader = ({ onImageLoaded }: Props) => {
     };
   };
 
+  const handleClick = useCallback(() => {
+    if (input && input.current) {
+      input.current.click();
+    }
+  }, []);
+
   return (
-    <Button variant="contained" component="label">
-      Select Image
-      <input type="file" accept="image/*" onChange={onChangeImage} hidden />
-    </Button>
+    <>
+      <Button variant="contained" onClick={handleClick}>
+        local file
+      </Button>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={onChangeImage}
+        hidden
+        ref={input}
+      />
+    </>
   );
 };
 

@@ -1,20 +1,33 @@
 import styled from '@emotion/styled';
 import { Box, Button, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { RectArea } from '../types';
+import { RectArea } from '../utils/types';
 import {
   createCanvas,
   createCanvasFromImage,
   getContext,
-  getNear,
-} from '../utils';
+} from '../utils/canvasUtils';
+import { getNear } from '../utils/mathUtils';
+import { ButtonLi, ButtonUl } from './ButtonWrapper';
 
-const CanvasWrapper = styled(Box)({
-  backgroundColor: '#ccc',
-  padding: '8px',
+const CanvasBase = styled(Box)({
   boxShadow: 'inset 0 3px 3px -2px rgba(0,0,0,.2)',
   textAlign: 'center',
+  backgroundColor: '#ccc',
+  padding: '8px',
   overflow: 'auto',
+  width: '100%',
+});
+const CanvasWrapper = styled(Box)({
+  display: 'inline-block',
+  position: 'relative',
+});
+
+const ButtonWrapper = styled(Box)({
+  position: 'absolute',
+  backgroundColor: '#fff',
+  padding: '4px',
+  boxShadow: '0 3px 3px -2px rgba(0,0,0,.2)',
 });
 
 type Props = {
@@ -37,29 +50,30 @@ const SelectableCanvas = ({
 
   // 下地になるImageDataを作成する
   useEffect(() => {
-    console.log('updated area', selectedAreas);
     if (imageData == null) {
       return;
     }
 
     // 矩形未選択なら propをそのまま流用
     if (selectedAreas.length === 0) {
-      console.log('updated area, area is 0. set imagedata');
       setBaseImageData(imageData);
       return;
     }
 
     // 選択済み矩形を反映したimageDataを用意
     const [cv, ctx] = createCanvasFromImage(imageData);
+
     selectedAreas.forEach((v) => {
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
       ctx.fillRect(...v);
+      ctx.strokeStyle = 'rgba(0,0,0)';
+      ctx.strokeRect(...v);
     });
     setBaseImageData(ctx.getImageData(0, 0, cv.width, cv.height));
   }, [imageData, selectedAreas]);
 
   // baseImageDataに変更があればCanvasに反映
   useEffect(() => {
-    console.log('updated baseImageData');
     if (baseImageData != null && canvas.current != null) {
       canvas.current.width = baseImageData.width;
       canvas.current.height = baseImageData.height;
@@ -68,9 +82,15 @@ const SelectableCanvas = ({
   }, [baseImageData]);
 
   // マウスドラッグ開始
-  const onMouseDown = useCallback(
+  const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+      // 左クリックでなければ終了
+      if (e.button !== 0) {
+        return;
+      }
+
       setMouseDown(true);
+      setAddable(false);
       // ドラッグ開始地点記録
       const rect = (e.target as HTMLElement).getBoundingClientRect();
       setStartPos([
@@ -82,7 +102,7 @@ const SelectableCanvas = ({
   );
 
   // マウスドラッグ中
-  const onMouseMove = useCallback(
+  const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
       if (mouseDown) {
         // 座標を求める
@@ -118,44 +138,96 @@ const SelectableCanvas = ({
     [startPos, mouseDown, baseImageData]
   );
   // マウスドラッグ完了
-  const onMouseUp = useCallback(
+  const handleMouseUp = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
       setMouseDown(false);
-      setAddable(true);
+      console.log(startPos[0], startPos[1], endPos[0], endPos[1]);
+      if (
+        startPos[0] === 0 &&
+        startPos[1] === 0 &&
+        endPos[0] === 0 &&
+        endPos[1] === 0
+      ) {
+        console.log();
+      } else {
+        setAddable(true);
+      }
     },
-    []
+    [startPos, endPos]
   );
+
+  // 選択範囲を消す
+  const refleshCanvas = useCallback(() => {
+    if (baseImageData == null || canvas.current == null) {
+      throw new Error();
+    }
+    // 元画像の再描画
+    const ctx = getContext(canvas.current);
+    ctx.putImageData(baseImageData, 1, 0); // なんかうまく描画されないので・・・ごまかす
+    ctx.putImageData(baseImageData, 0, 0);
+  }, [baseImageData]);
+
+  // 選択範囲のリセット
+  const refleshArea = useCallback(() => {
+    setAddable(false);
+    setStartPos([0, 0]);
+    setEndPos([0, 0]);
+  }, []);
 
   return (
     <>
       {baseImageData != null && (
         <>
-          <CanvasWrapper>
-            <canvas
-              ref={canvas}
-              width="100"
-              height="0"
-              onMouseDown={onMouseDown}
-              onMouseMove={onMouseMove}
-              onMouseUp={onMouseUp}
-            ></canvas>
-          </CanvasWrapper>
-          <Box sx={{ display: 'flex', justifyContent: 'center' }} m={1}>
-            <Button
-              onClick={() => {
-                onSelectArea(getSelectedArea(startPos, endPos));
-                setAddable(false);
-                setStartPos([0, 0]);
-                setEndPos([0, 0]);
-              }}
-              disabled={!addable}
-              variant="contained"
-              size="small"
-            >
-              選択範囲を隠蔽対象に追加
-            </Button>
-            <Typography marginLeft={20}>画像上で対象範囲をドラッグ</Typography>
-          </Box>
+          <CanvasBase>
+            <CanvasWrapper>
+              <canvas
+                ref={canvas}
+                width="100"
+                height="0"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+              ></canvas>
+
+              {addable && (
+                <ButtonWrapper
+                  style={{
+                    left: Math.abs(endPos[0]),
+                    top: Math.abs(endPos[1]),
+                  }}
+                >
+                  <ButtonUl>
+                    <ButtonLi>
+                      <Button
+                        onClick={() => {
+                          onSelectArea(getSelectedArea(startPos, endPos));
+                          refleshArea();
+                        }}
+                        disabled={!addable}
+                        variant="contained"
+                        size="small"
+                      >
+                        add
+                      </Button>
+                    </ButtonLi>
+                    <ButtonLi>
+                      <Button
+                        onClick={() => {
+                          refleshCanvas();
+                          refleshArea();
+                        }}
+                        disabled={!addable}
+                        variant="contained"
+                        size="small"
+                      >
+                        cancel
+                      </Button>
+                    </ButtonLi>
+                  </ButtonUl>
+                </ButtonWrapper>
+              )}
+            </CanvasWrapper>
+          </CanvasBase>
         </>
       )}
     </>

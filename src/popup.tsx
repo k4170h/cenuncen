@@ -14,8 +14,8 @@ const Popup = () => {
 
   return (
     <Box
-      width={800}
-      height={600}
+      // width={800}
+      // height={600}
       overflow="auto"
       sx={{ border: '1px solid black' }}
     >
@@ -29,8 +29,8 @@ const Popup = () => {
         <Tab label="Encode" value="encode" />
         <Tab label="Decode" value="decode" />
       </Tabs>
-      {mode === 'encode' && <Encoder />}
-      {mode === 'decode' && <Decoder />}
+      {/* {mode === 'encode' && <Encoder />}
+      {mode === 'decode' && <Decoder />} */}
       <Button
         onClick={() => {
           (async () => {

@@ -1,12 +1,21 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ImageLoader from './ImageLoader';
 import SelectableCanvas from './SelectableCanvas';
-import { encodeImage } from '../converter';
-import { EncodeOptions, RectArea } from '../types';
+import { EncodeOptions, RectArea } from '../utils/types';
 import SelectedAreaList from './SelectedAreaList';
 import EncodeForm from './EncodeForm';
 import { Box } from '@mui/material';
 import SavableCanvas from './SavableCanvas';
+import { encodeImageData } from '../utils/convertUtils';
+import {
+  MIN_PIXEL_BLOCK_WIDTH,
+  MIN_RESIZED_IMAGE_WIDTH,
+} from '../utils/definition';
+import { ButtonLi, ButtonUl } from './ButtonWrapper';
+import CenteringBox from './CenteringBox';
+import { scroller, Element } from 'react-scroll';
+import Stepper from './Stepper';
+import ImageFromClipboard from './ImageFromClipboard';
 
 const Encoder = () => {
   const [encodedImageData, setEncodedImageData] = useState<null | ImageData>(
@@ -22,11 +31,15 @@ const Encoder = () => {
     if (originalImageData == null) {
       return;
     }
-    const minGridSize = Math.round(
-      (originalImageData.width > originalImageData.height
+
+    const longStroke =
+      originalImageData.width > originalImageData.height
         ? originalImageData.width
-        : originalImageData.height) / 100
+        : originalImageData.height;
+    const minGridSize = Math.ceil(
+      (MIN_PIXEL_BLOCK_WIDTH * longStroke) / MIN_RESIZED_IMAGE_WIDTH
     );
+    console.log(minGridSize);
     setMinGridSize(minGridSize);
   }, [originalImageData]);
 
@@ -35,6 +48,13 @@ const Encoder = () => {
     setEncodedImageData(null);
     setOriginalImageData(imageData);
     setSelectedAreas([]);
+
+    scroller.scrollTo('step2', {
+      duration: 800,
+      delay: 100,
+      smooth: 'easeInOutQuart',
+      offset: -60,
+    });
   };
 
   // 範囲が追加されたとき
@@ -53,54 +73,66 @@ const Encoder = () => {
       }
 
       // エンコードの実施
-      const encodedImageData = encodeImage(
+      const encodedImageData = encodeImageData(
         originalImageData,
         selectedAreas,
         options
       );
       setEncodedImageData(encodedImageData);
+      scroller.scrollTo('step4', {
+        duration: 800,
+        delay: 100,
+        smooth: 'easeInOutQuart',
+        offset: -60,
+      });
     },
     [selectedAreas, originalImageData]
   );
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        flexWrap: 'wrap',
-      }}
-    >
-      <Box width="100%" p={4} textAlign="center">
-        <ImageLoader onImageLoaded={onChangeImage} />
-      </Box>
-      <Box width="100%">
+    <>
+      <Stepper />
+      <CenteringBox>
+        <Element name="step1"></Element>
+        <ButtonUl>
+          <ButtonLi>
+            <ImageLoader onImageLoaded={onChangeImage} />
+          </ButtonLi>
+          <ButtonLi>
+            <ImageFromClipboard onImageLoaded={onChangeImage} />
+          </ButtonLi>
+        </ButtonUl>
+        <Box height="16px" />
+        <Element name="step2"></Element>
         <SelectableCanvas
           {...{ imageData: originalImageData, onSelectArea, selectedAreas }}
         />
-      </Box>
-      <Box width={400} p={4}>
-        <SelectedAreaList
-          selectedAreas={selectedAreas}
-          onUpdateList={setSelectedAreas}
-        />
-      </Box>
-      <Box width={300} p={4}>
-        <EncodeForm
-          onSubmit={encode}
-          disabled={originalImageData == null || selectedAreas.length === 0}
-          minGridSize={minGridSize}
-        />
-      </Box>
-      <Box
-        width="100%"
-        sx={{
-          overflow: 'auto',
-        }}
-      >
-        <SavableCanvas imageData={encodedImageData} />
-      </Box>
-    </Box>
+        <Element name="step3"></Element>
+        <Box width={400} p={4}>
+          <SelectedAreaList
+            selectedAreas={selectedAreas}
+            onUpdateList={setSelectedAreas}
+          />
+        </Box>
+
+        <Box width={300} p={4}>
+          <EncodeForm
+            onSubmit={encode}
+            disabled={originalImageData == null || selectedAreas.length === 0}
+            minGridSize={minGridSize}
+          />
+        </Box>
+        <Element name="step4"></Element>
+        <Box
+          width="100%"
+          sx={{
+            overflow: 'auto',
+          }}
+        >
+          <SavableCanvas imageData={encodedImageData} title="隠蔽済み画像" />
+        </Box>
+      </CenteringBox>
+    </>
   );
 };
 

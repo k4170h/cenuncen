@@ -9,11 +9,16 @@ import {
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
-import { EncodeOptions } from '../types';
+import { EncodeOptions } from '../utils/types';
 
 import Grid3x3OutlinedIcon from '@mui/icons-material/Grid3x3Outlined';
 import Grid4x4OutlinedIcon from '@mui/icons-material/Grid4x4Outlined';
-import { getNearCeil } from '../utils';
+import { getNearCeil } from '../utils/mathUtils';
+
+import ShuffleIcon from '@mui/icons-material/Shuffle';
+import InvertColorsIcon from '@mui/icons-material/InvertColors';
+import Rotate90DegreesCwIcon from '@mui/icons-material/Rotate90DegreesCw';
+import KeyIcon from '@mui/icons-material/Key';
 
 type Props = {
   minGridSize?: number;
@@ -54,27 +59,45 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
       </Stack>
 
       <FormControlLabel
-        control={<Checkbox checked={isSwap} />}
-        label="入替"
-        sx={{ display: 'inline-block' }}
+        control={
+          <Checkbox
+            checked={isSwap}
+            sx={{
+              marginTop: -1,
+            }}
+          />
+        }
+        label={<ShuffleIcon />}
         disabled={disabled}
         onChange={(_, v) => {
           setIsSwap(v);
         }}
       />
       <FormControlLabel
-        control={<Checkbox checked={isNega} />}
-        label="色反転"
-        sx={{ display: 'inline-block' }}
+        control={
+          <Checkbox
+            checked={isNega}
+            sx={{
+              marginTop: -1,
+            }}
+          />
+        }
+        label={<InvertColorsIcon />}
         disabled={disabled}
         onChange={(_, v) => {
           setIsNega(v);
         }}
       />
       <FormControlLabel
-        control={<Checkbox checked={isRotate} />}
-        label="回転"
-        sx={{ display: 'inline-block' }}
+        control={
+          <Checkbox
+            checked={isRotate}
+            sx={{
+              marginTop: -1,
+            }}
+          />
+        }
+        label={<Rotate90DegreesCwIcon />}
         disabled={disabled}
         onChange={(_, v) => {
           setIsRotate(v);
@@ -82,9 +105,14 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
       />
       <Box display="flex">
         <FormControlLabel
-          control={<Checkbox />}
-          label="鍵"
-          sx={{ display: 'inline-block' }}
+          control={
+            <Checkbox
+              sx={{
+                marginTop: -1,
+              }}
+            />
+          }
+          label={<KeyIcon />}
           disabled={disabled}
           onChange={(_, v) => {
             setExistsKey(v);
@@ -93,7 +121,7 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
         {existsKey && (
           <TextField
             type="text"
-            label="鍵"
+            label="hashkey"
             style={{ width: '6em' }}
             size="small"
             disabled={disabled}

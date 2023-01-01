@@ -1,8 +1,10 @@
 import styled from '@emotion/styled';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { RectArea } from '../types';
-import { createCanvas, createCanvasFromImage, getContext } from '../utils';
+import { getContext } from '../utils/canvasUtils';
+import { ButtonLi, ButtonUl } from './ButtonWrapper';
+import SaveAltIcon from '@mui/icons-material/SaveAlt';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 const CanvasWrapper = styled(Box)({
   backgroundColor: '#ccc',
@@ -10,13 +12,25 @@ const CanvasWrapper = styled(Box)({
   boxShadow: 'inset 0 3px 3px -2px rgba(0,0,0,.2)',
   textAlign: 'center',
   overflow: 'auto',
+  position: 'relative',
+});
+
+const Title = styled(Box)({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  backgroundColor: '#fff',
+  padding: '4px',
+  borderRadius: '0 0 10px 0',
+  boxShadow: '0 3px 3px -2px rgba(0,0,0,.2)',
 });
 
 type Props = {
   imageData: ImageData | null;
+  title?: string;
 };
 
-const SavableCanvas = ({ imageData }: Props) => {
+const SavableCanvas = ({ imageData, title }: Props) => {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [jpg, setJpg] = useState<string | null>(null);
   const [png, setPng] = useState<string | null>(null);
@@ -60,52 +74,49 @@ const SavableCanvas = ({ imageData }: Props) => {
       {imageData != null && (
         <>
           <CanvasWrapper>
+            <Title>{title}</Title>
             <canvas ref={canvas} width="100" height="0"></canvas>
           </CanvasWrapper>
-          <Box sx={{ display: 'flex', justifyContent: 'center' }} m={1}>
-            <Button
-              onClick={() => {
-                saveToClipboard();
-              }}
-              disabled={imageData == null}
-              variant="contained"
-              size="small"
-              style={{
-                display: 'block',
-                margin: 4,
-              }}
-            >
-              クリップボードにコピー
-            </Button>
-            <Button
-              component={'a'}
-              variant="contained"
-              size="small"
-              disabled={jpg == null}
-              download="image"
-              href={jpg == null ? '' : jpg}
-              style={{
-                display: 'block',
-                margin: 4,
-              }}
-            >
-              JPGで保存
-            </Button>
-            <Button
-              component={'a'}
-              variant="contained"
-              size="small"
-              disabled={png == null}
-              href={png == null ? '' : png}
-              download="image"
-              style={{
-                display: 'block',
-                margin: 4,
-              }}
-            >
-              PNGで保存
-            </Button>
-          </Box>
+          <ButtonUl>
+            <ButtonLi>
+              <Button
+                onClick={() => {
+                  saveToClipboard();
+                }}
+                disabled={imageData == null}
+                variant="contained"
+                size="small"
+              >
+                <ContentCopyIcon />
+              </Button>
+            </ButtonLi>
+            <ButtonLi>
+              <Button
+                component={'a'}
+                variant="contained"
+                size="small"
+                disabled={jpg == null}
+                download="image"
+                href={jpg == null ? '' : jpg}
+              >
+                <SaveAltIcon />
+                JPG
+              </Button>
+            </ButtonLi>
+            <ButtonLi>
+              <Button
+                component={'a'}
+                variant="contained"
+                size="small"
+                disabled={png == null}
+                href={png == null ? '' : png}
+                download="image"
+              >
+                <SaveAltIcon />
+                PNG
+              </Button>
+            </ButtonLi>
+          </ButtonUl>
         </>
       )}
     </>

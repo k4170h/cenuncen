@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { RectArea } from '../types';
+import { RectArea } from '../utils/types';
 import {
   Table,
   TableBody,

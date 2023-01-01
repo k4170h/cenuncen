@@ -3,20 +3,16 @@ import {
   dataToColorByteCode,
   numToBase64Char,
   toData,
-} from './colorByteCode';
+} from './utils/colorByteCodeUtils';
 import {
   DecodeOptions,
   EncodeOptions,
   Pixel,
   PixelGroup,
   RectArea,
-} from './types';
-import {
-  createCanvas,
-  createCanvasFromImage,
-  createHash,
-  generateNumArrByHash,
-} from './utils';
+} from './utils/types';
+import { createCanvas, createCanvasFromImage } from './utils/canvasUtils';
+import { createHash, generateNumArrByHash } from './utils/mathUtils';
 
 const DEFAULT_KEY = '74k4H1r0';
 
@@ -291,6 +287,7 @@ const flipGroups = (groups: PixelGroup[], hash: string) => {
   const hashNums = generateNumArrByHash(hash);
   return groups.map((v, i) => {
     const h = hashNums[i % hashNums.length] % 3;
+
     return h === 0 ? v : flipGroup(v, h as 1 | 2);
   });
 };
@@ -469,16 +466,11 @@ export const encodeImage = (
   );
 
   // 画面下に追加する色バイトコードのImageData作成
-  const data = toData(
-    options,
-    resizedAreas,
-    [imageData.width, imageData.height],
-    {
-      negaColorMap: retObj[0].negaColorMap
-        ? retObj.map((v) => v.negaColorMap)
-        : undefined,
-    }
-  );
+  const data = toData(options, resizedAreas, [
+    imageData.width,
+    imageData.height,
+    0,
+  ]);
   const colorByteCodeImageData = dataToColorByteCode(
     data,
     imageData.width,
@@ -666,64 +658,56 @@ const decodeArea = (
   if (width === imageData.width) {
     // 原寸大ならそのまま貼り付け
 
-    if (decodeOptions.isJuggle) {
-      // 補完して貼り付け
-      ctx.drawImage(
-        createCanvasFromImage(
-          fillGridLine(
-            decodedImageData,
-            encodeOptions.gridSize,
-            Math.ceil(1 / scale)
-          )
-        )[0],
-        area[0],
-        area[1]
-      );
-    } else {
-      // そのまま貼り付け
-      ctx.drawImage(
-        createCanvasFromImage(decodedImageData)[0],
-        area[0],
-        area[1]
-      );
-    }
+    // if (decodeOptions.isJuggle) {
+    //   // 補完して貼り付け
+    //   ctx.drawImage(
+    //     createCanvasFromImage(
+    //       fillGridLine(
+    //         decodedImageData,
+    //         encodeOptions.gridSize,
+    //         Math.ceil(1 / scale)
+    //       )
+    //     )[0],
+    //     area[0],
+    //     area[1]
+    //   );
+    // } else {
+    // そのまま貼り付け
+    ctx.drawImage(createCanvasFromImage(decodedImageData)[0], area[0], area[1]);
+    // }
   } else {
     // リサイズ画像なら元のサイズにして貼り付け
-    if (decodeOptions.isJuggle) {
-      // 貼り付け先の境界線をごまかす(ちょっと大きめにとる)
-      const ib = fillGridOutLine(
-        ctx.getImageData(0, 0, cv.width, cv.height),
-        Math.round(area[0] * scale) - 1,
-        Math.round(area[1] * scale) - 1,
-        Math.round(area[2] * scale) + 2,
-        Math.round(area[3] * scale) + 2
-      );
-      ctx.putImageData(ib, 0, 0);
+    // if (decodeOptions.isJuggle) {
+    // 貼り付け先の境界線をごまかす(ちょっと大きめにとる)
+    // const ib = fillGridOutLine(
+    //   ctx.getImageData(0, 0, cv.width, cv.height),
+    //   Math.round(area[0] * scale) - 1,
+    //   Math.round(area[1] * scale) - 1,
+    //   Math.round(area[2] * scale) + 2,
+    //   Math.round(area[3] * scale) + 2
+    // );
+    // ctx.putImageData(ib, 0, 0);
 
-      // 貼り付け対象はリサイズして貼り付け
-      ctx.scale(scale, scale);
+    // // 貼り付け対象はリサイズして貼り付け
+    // ctx.scale(scale, scale);
 
-      // 貼り付け画像内の劣化している箇所をごまかしてから貼り付ける
-      ctx.drawImage(
-        createCanvasFromImage(
-          fillGridLine(
-            decodedImageData,
-            encodeOptions.gridSize,
-            Math.ceil(1 / scale)
-          )
-        )[0],
-        area[0],
-        area[1]
-      );
-    } else {
-      // 貼り付け対象はリサイズして貼り付け
-      ctx.scale(scale, scale);
-      ctx.drawImage(
-        createCanvasFromImage(decodedImageData)[0],
-        area[0],
-        area[1]
-      );
-    }
+    // // 貼り付け画像内の劣化している箇所をごまかしてから貼り付ける
+    // ctx.drawImage(
+    //   createCanvasFromImage(
+    //     fillGridLine(
+    //       decodedImageData,
+    //       encodeOptions.gridSize,
+    //       Math.ceil(1 / scale)
+    //     )
+    //   )[0],
+    //   area[0],
+    //   area[1]
+    // );
+    // } else {
+    // 貼り付け対象はリサイズして貼り付け
+    ctx.scale(scale, scale);
+    ctx.drawImage(createCanvasFromImage(decodedImageData)[0], area[0], area[1]);
+    // }
   }
   return ctx.getImageData(0, 0, cv.width, cv.height);
 };

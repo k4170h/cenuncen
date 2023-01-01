@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "watch": "webpack --config webpack/webpack.dev.js --watch",
-    "dev":"webpack --config webpack/webpack.dev.js",
+    "dev": "webpack --config webpack/webpack.dev.js",
     "build": "webpack --config webpack/webpack.prod.js",
     "clean": "rimraf dist",
     "test": "npx jest",
@@ -25,14 +25,17 @@
     "@mui/material": "^5.10.6",
     "buffer": "^6.0.3",
     "jssha": "^3.2.0",
+    "query-string": "^8.1.0",
     "react": "^17.0.1",
-    "react-dom": "^17.0.1"
+    "react-dom": "^17.0.1",
+    "react-scroll": "^1.8.9"
   },
   "devDependencies": {
     "@types/chrome": "0.0.158",
     "@types/jest": "^27.0.2",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
+    "@types/react-scroll": "^1.8.5",
     "copy-webpack-plugin": "^9.0.1",
     "eslint": "^8.23.0",
     "eslint-config-prettier": "^8.5.0",

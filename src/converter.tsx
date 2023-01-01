@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import Decoder from './components/Decoder';
 import Encoder from './components/Encoder';
-import * as cbc from './colorByteCode';
 
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import { Box, Paper } from '@mui/material';
+import { Box } from '@mui/material';
+import { useEffect, useState } from 'react';
+import React from 'react';
+import Header from './components/Header';
 
 type Mode = 'encode' | 'decode';
 
@@ -15,16 +14,12 @@ const Converter = () => {
 
   return (
     <Box>
-      <Tabs
-        value={mode}
-        onChange={(e, v) => {
+      <Header
+        mode={mode}
+        onChange={(v) => {
           setMode(v);
         }}
-        style={{ marginBottom: 4 }}
-      >
-        <Tab label="Encode" value="encode" />
-        <Tab label="Decode" value="decode" />
-      </Tabs>
+      />
       {mode === 'encode' && <Encoder />}
       {mode === 'decode' && <Decoder />}
     </Box>

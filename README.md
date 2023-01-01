@@ -1,12 +1,8 @@
-
-
-
 ## Setup
 
 ```
 npm install
 ```
-
 
 ## Build
 
@@ -22,6 +18,8 @@ npm run build
 npm run watch
 ```
 
+'webpack.dev.js' に書いてある output/path に適宜上書きされる
 
-## Started with 
+## Started with
+
 [chrome-extension-typescript-starter](https://github.com/chibat/chrome-extension-typescript-starter/)

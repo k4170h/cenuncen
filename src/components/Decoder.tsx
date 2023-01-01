@@ -1,89 +1,96 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import ImageLoader from './ImageLoader';
-import { decodeImage } from '../converter';
 import SavableCanvas from './SavableCanvas';
-import { colorByteCodeToData } from '../colorByteCode';
+import { DecodeOptions } from '../utils/types';
+import { Box, Button } from '@mui/material';
+import { decodeImageData } from '../utils/convertUtils';
+import { createCanvasFromImage } from '../utils/canvasUtils';
 import DecodeForm from './DecodeForm';
-import { DecodeOptions, EncodeOptions, RectArea } from '../types';
-import { Box } from '@mui/material';
+import { ButtonLi, ButtonUl } from './ButtonWrapper';
+import ImageFromClipboard from './ImageFromClipboard';
 
 const Decoder = () => {
   const [imageData, setImageData] = useState<ImageData | null>(null);
   const [decodedImageData, setDecodedImageData] = useState<ImageData | null>(
     null
   );
-  const [isFullsize, setIsFullsize] = useState(false);
-  const [needKey, setNeedKey] = useState(false);
-  const [colorByteCodeData, setColorByteCodeData] = useState<{
-    encodeOptions: EncodeOptions;
-    areas: RectArea[];
-    size: [number, number];
-    optionalData: any;
-  } | null>(null);
 
   const onImageLoaded = useCallback((imageData: ImageData) => {
-    setImageData(imageData);
+    try {
+      setImageData(imageData);
 
-    // 画像のカラーバイトコードを読む
-    const colorByteCodeData_ = colorByteCodeToData(imageData);
-    setColorByteCodeData(colorByteCodeData_);
+      const decodedImageData = decodeImageData(imageData);
 
-    setIsFullsize(imageData.width === colorByteCodeData_.size[0]);
-    setNeedKey(colorByteCodeData_.encodeOptions.hashKey !== null);
-
-    // デコード実施
-    const decodedImageData = decodeImage(
-      imageData,
-      colorByteCodeData_.areas,
-      colorByteCodeData_.encodeOptions,
-      { hashKey: null, isJuggle: true },
-      colorByteCodeData_.size,
-      colorByteCodeData_.optionalData
-    );
-    setDecodedImageData(decodedImageData);
+      setDecodedImageData(decodedImageData);
+    } catch (e) {
+      alert('デコード失敗:' + e);
+      console.error('failed decode from local file.' + e);
+    }
   }, []);
 
-  const decode = useCallback(
+  // キーを指定して再デコード
+  const reDecode = useCallback(
     (decodeOptions: DecodeOptions) => {
-      if (colorByteCodeData == null || imageData == null) {
+      if (!imageData) {
         return;
       }
-
-      // デコード実施(Formの入力オプションで)
-      const decodedImageData = decodeImage(
-        imageData,
-        colorByteCodeData.areas,
-        colorByteCodeData.encodeOptions,
-        decodeOptions,
-        colorByteCodeData.size,
-        colorByteCodeData.optionalData
-      );
+      const decodedImageData = decodeImageData(imageData, {
+        hashKey: decodeOptions.hashKey,
+      });
       setDecodedImageData(decodedImageData);
     },
-    [imageData, colorByteCodeData]
+    [imageData]
   );
 
+  // クリップボードから画像を開く
+  const loadFromClipboard = useCallback(() => {
+    const clipboard = navigator.clipboard.read();
+    clipboard.then(([item]) => {
+      try {
+        // const item = v[0];
+        if (!item.types.includes('image/png')) {
+          throw new Error('invalid clipboard.');
+        }
+        item.getType('image/png').then((blob) => {
+          const image = new Image();
+          image.src = URL.createObjectURL(blob); // 画像のURLを指定
+          image.onload = () => {
+            const [cv, cx] = createCanvasFromImage(image);
+            const decodedImageData = decodeImageData(
+              cx.getImageData(0, 0, cv.width, cv.height)
+            );
+            setDecodedImageData(decodedImageData);
+          };
+        });
+      } catch (e) {
+        alert(e);
+        console.error('failed to load image from clipboard.' + e);
+      }
+    });
+  }, []);
+
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        flexWrap: 'wrap',
-      }}
-    >
-      <Box width="100%" pt={4} textAlign="center">
-        <ImageLoader onImageLoaded={onImageLoaded} />
-      </Box>
-      <Box width={300} p={4}>
-        <DecodeForm
-          disabled={imageData == null}
-          isFullsize={isFullsize}
-          needKey={needKey}
-          onSubmit={decode}
-        />
-      </Box>
-      <Box width="100%">
-        <SavableCanvas imageData={decodedImageData} />
+    <Box>
+      <ButtonUl>
+        <ButtonLi>
+          <ImageLoader onImageLoaded={onImageLoaded} />
+        </ButtonLi>
+        <ButtonLi>
+          <ImageFromClipboard onImageLoaded={onImageLoaded} />
+        </ButtonLi>
+      </ButtonUl>
+      <Box>
+        {decodedImageData && (
+          <>
+            <SavableCanvas imageData={decodedImageData} title="デコード後" />
+            <DecodeForm onSubmit={reDecode} />
+          </>
+        )}
+        {imageData && (
+          <>
+            <SavableCanvas imageData={imageData} title="デコード前" />
+          </>
+        )}
       </Box>
     </Box>
   );
