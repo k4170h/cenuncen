@@ -39,7 +39,7 @@ const Encoder = () => {
     const minGridSize = Math.ceil(
       (MIN_PIXEL_BLOCK_WIDTH * longStroke) / MIN_RESIZED_IMAGE_WIDTH
     );
-    console.log(minGridSize);
+
     setMinGridSize(minGridSize);
   }, [originalImageData]);
 
@@ -129,7 +129,7 @@ const Encoder = () => {
             overflow: 'auto',
           }}
         >
-          <SavableCanvas imageData={encodedImageData} title="隠蔽済み画像" />
+          <SavableCanvas imageData={encodedImageData} title="Result" />
         </Box>
       </CenteringBox>
     </>

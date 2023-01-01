@@ -209,7 +209,6 @@ const fillArea = (
   const padding = Math.ceil(
     (MIN_PIXEL_GROUP_PADDING * longStroke) / MIN_RESIZED_IMAGE_WIDTH
   );
-  console.log('padding', padding);
   const gs = options.gridSize;
 
   // グリッド内のPaddingより内側だけを塗りつぶす

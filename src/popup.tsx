@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import Decoder from './components/Decoder';
-import Encoder from './components/Encoder';
 
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';

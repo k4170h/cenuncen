@@ -4,9 +4,9 @@ chrome.action.onClicked.addListener(async () => {
 });
 
 chrome.runtime.onInstalled.addListener(function (details) {
-  const parentId = chrome.contextMenus.create({
+  chrome.contextMenus.create({
     id: 'menu',
-    title: 'samplemenu',
+    title: 'uncensoring',
     contexts: ['image'],
   });
 });
@@ -21,47 +21,11 @@ chrome.contextMenus.onClicked.addListener((item, tab) => {
     return;
   }
 
-  // fetch(item.srcUrl).then((res) => {
-  //   // fetch('https://zipcloud.ibsnet.co.jp/api/search?zipcode=7830060').then((res) => {
-  //   res.text().then((v) => {
-  //     console.log('json', v);
-  //   });
-  //   res.blob().then((blob) => {
-  //     console.log('bk blob', blob);
-  //   });
-  // });
-
   if (!tab || !tab.id) {
     return;
   }
-  console.log(tab.id);
-  chrome.tabs.sendMessage(tab.id, { type: 'type1', src: item.srcUrl }, (v) => {
-    console.log('callback', v);
-  });
 
-  // const getImg = (url: string) => {
-  //   console.log('getImg', url);
-  //   // fetchでアクセス.
-
-  //   return fetch(url, { mode: 'no-cors' }).then((v) => {
-  //     v.blob().then((v) => {
-  //       console.log('blob is ', v);
-  //     });
-  //   });
-  // };
-
-  // chrome.scripting
-  //   .executeScript({
-  //     target: { tabId: tab.id },
-  //     func: getImg,
-  //     args: [item.srcUrl],
-  //   })
-  //   .then((v) => {
-  //     console.log('result', v);
-  //   });
-
-  // const url = chrome.runtime.getURL('viewer.html?src=' + item.srcUrl);
-  // chrome.tabs.create({ url });
+  chrome.tabs.sendMessage(tab.id, { type: 'type1', src: item.srcUrl });
 });
 
 chrome.runtime.onMessage.addListener((message) => {

@@ -30,14 +30,13 @@ const Viewer = () => {
   const [decodedImageData, setDecodedImageData] = useState<ImageData | null>(
     null
   );
-  const query = queryString.parse(location.search);
+  const query = queryString.parse(window.location.search);
 
   useEffect(() => {
     if (query.dataUrl) {
       const image = new Image();
       image.src = query.dataUrl as string; // 画像のURLを指定
       image.onload = () => {
-        console.log('loaded image');
         const [cv, cx] = createCanvasFromImage(image);
         setImageData(cx.getImageData(0, 0, cv.width, cv.height));
         const decodedImageData = decodeImageData(
@@ -64,8 +63,8 @@ const Viewer = () => {
 
   return (
     <Box>
-      <SavableCanvas imageData={decodedImageData} />
       <DecodeForm onSubmit={reDecode} />
+      <SavableCanvas imageData={decodedImageData} />
       <CloseButton
         onClick={() => {
           window.close();

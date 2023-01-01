@@ -14,6 +14,8 @@ const StyledBox = styled(Box)({
   top: '50%',
   backgroundColor: '#fff',
   zIndex: 900,
+  boxShadow: '0 1px 3px 0px rgba(0,0,0,.2)',
+  borderRadius: '0 8px 8px 0 ',
 });
 
 const Ul = styled('ul')({

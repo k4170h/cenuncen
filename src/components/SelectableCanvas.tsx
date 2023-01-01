@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RectArea } from '../utils/types';
 import {
@@ -11,7 +11,7 @@ import { getNear } from '../utils/mathUtils';
 import { ButtonLi, ButtonUl } from './ButtonWrapper';
 
 const CanvasBase = styled(Box)({
-  boxShadow: 'inset 0 3px 3px -2px rgba(0,0,0,.2)',
+  boxShadow: 'inset 0 1px 3px 0px rgba(0,0,0,.2)',
   textAlign: 'center',
   backgroundColor: '#ccc',
   padding: '8px',
@@ -27,7 +27,7 @@ const ButtonWrapper = styled(Box)({
   position: 'absolute',
   backgroundColor: '#fff',
   padding: '4px',
-  boxShadow: '0 3px 3px -2px rgba(0,0,0,.2)',
+  boxShadow: '0 1px 3px 0px rgba(0,0,0,.2)',
 });
 
 type Props = {
@@ -141,15 +141,12 @@ const SelectableCanvas = ({
   const handleMouseUp = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
       setMouseDown(false);
-      console.log(startPos[0], startPos[1], endPos[0], endPos[1]);
       if (
-        startPos[0] === 0 &&
-        startPos[1] === 0 &&
-        endPos[0] === 0 &&
-        endPos[1] === 0
+        startPos[0] !== 0 ||
+        startPos[1] !== 0 ||
+        endPos[0] !== 0 ||
+        endPos[1] !== 0
       ) {
-        console.log();
-      } else {
         setAddable(true);
       }
     },

@@ -1,6 +1,5 @@
-import { Box, Button, FormControl, Tab, Tabs, TextField } from '@mui/material';
-import React, { useState } from 'react';
-import { DecodeOptions } from '../utils/types';
+import { Box, Tab, Tabs } from '@mui/material';
+import React from 'react';
 
 type Props = {
   onChange: (v: 'encode' | 'decode') => void;
@@ -24,7 +23,7 @@ const Header = ({ onChange, mode }: Props) => {
           left: 0,
           backgroundColor: '#fff',
           width: '100%',
-          boxShadow: '0 3px 3px -2px rgba(0,0,0,.2)',
+          boxShadow: '0 1px 3px 0px rgba(0,0,0,.2)',
           zIndex: 1000,
         }}
       >

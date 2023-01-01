@@ -2,12 +2,12 @@ import React, { useCallback, useState } from 'react';
 import ImageLoader from './ImageLoader';
 import SavableCanvas from './SavableCanvas';
 import { DecodeOptions } from '../utils/types';
-import { Box, Button } from '@mui/material';
+import { Box } from '@mui/material';
 import { decodeImageData } from '../utils/convertUtils';
-import { createCanvasFromImage } from '../utils/canvasUtils';
 import DecodeForm from './DecodeForm';
 import { ButtonLi, ButtonUl } from './ButtonWrapper';
 import ImageFromClipboard from './ImageFromClipboard';
+import CenteringBox from './CenteringBox';
 
 const Decoder = () => {
   const [imageData, setImageData] = useState<ImageData | null>(null);
@@ -42,57 +42,33 @@ const Decoder = () => {
     [imageData]
   );
 
-  // クリップボードから画像を開く
-  const loadFromClipboard = useCallback(() => {
-    const clipboard = navigator.clipboard.read();
-    clipboard.then(([item]) => {
-      try {
-        // const item = v[0];
-        if (!item.types.includes('image/png')) {
-          throw new Error('invalid clipboard.');
-        }
-        item.getType('image/png').then((blob) => {
-          const image = new Image();
-          image.src = URL.createObjectURL(blob); // 画像のURLを指定
-          image.onload = () => {
-            const [cv, cx] = createCanvasFromImage(image);
-            const decodedImageData = decodeImageData(
-              cx.getImageData(0, 0, cv.width, cv.height)
-            );
-            setDecodedImageData(decodedImageData);
-          };
-        });
-      } catch (e) {
-        alert(e);
-        console.error('failed to load image from clipboard.' + e);
-      }
-    });
-  }, []);
-
   return (
-    <Box>
-      <ButtonUl>
-        <ButtonLi>
-          <ImageLoader onImageLoaded={onImageLoaded} />
-        </ButtonLi>
-        <ButtonLi>
-          <ImageFromClipboard onImageLoaded={onImageLoaded} />
-        </ButtonLi>
-      </ButtonUl>
-      <Box>
-        {decodedImageData && (
-          <>
-            <SavableCanvas imageData={decodedImageData} title="デコード後" />
-            <DecodeForm onSubmit={reDecode} />
-          </>
-        )}
-        {imageData && (
-          <>
-            <SavableCanvas imageData={imageData} title="デコード前" />
-          </>
-        )}
-      </Box>
-    </Box>
+    <>
+      <CenteringBox>
+        <ButtonUl>
+          <ButtonLi>
+            <ImageLoader onImageLoaded={onImageLoaded} />
+          </ButtonLi>
+          <ButtonLi>
+            <ImageFromClipboard onImageLoaded={onImageLoaded} />
+          </ButtonLi>
+        </ButtonUl>
+        <Box m={4} width="100%">
+          {imageData && !decodedImageData && (
+            <>
+              <SavableCanvas imageData={imageData} title="デコード前" />
+            </>
+          )}
+          {decodedImageData && (
+            <>
+              <DecodeForm onSubmit={reDecode} />
+              <Box height="16px" />
+              <SavableCanvas imageData={decodedImageData} title="Result" />
+            </>
+          )}
+        </Box>
+      </CenteringBox>
+    </>
   );
 };
 

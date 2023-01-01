@@ -103,7 +103,7 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
           setIsRotate(v);
         }}
       />
-      <Box display="flex">
+      <Box display="flex" mb={2}>
         <FormControlLabel
           control={
             <Checkbox
@@ -144,7 +144,7 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
           });
         }}
       >
-        エンコード
+        Censoring
       </Button>
     </FormControl>
   );

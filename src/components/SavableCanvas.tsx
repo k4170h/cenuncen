@@ -9,7 +9,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 const CanvasWrapper = styled(Box)({
   backgroundColor: '#ccc',
   padding: '8px',
-  boxShadow: 'inset 0 3px 3px -2px rgba(0,0,0,.2)',
+  boxShadow: 'inset 0 1px 3px 0px rgba(0,0,0,.2)',
   textAlign: 'center',
   overflow: 'auto',
   position: 'relative',
@@ -22,7 +22,7 @@ const Title = styled(Box)({
   backgroundColor: '#fff',
   padding: '4px',
   borderRadius: '0 0 10px 0',
-  boxShadow: '0 3px 3px -2px rgba(0,0,0,.2)',
+  boxShadow: '0 1px 3px 0px rgba(0,0,0,.2)',
 });
 
 type Props = {
@@ -65,7 +65,7 @@ const SavableCanvas = ({ imageData, title }: Props) => {
         }),
       ]);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }, []);
 
