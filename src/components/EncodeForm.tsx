@@ -121,7 +121,7 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
         {existsKey && (
           <TextField
             type="text"
-            label="hashkey"
+            label="Key"
             style={{ width: '6em' }}
             size="small"
             disabled={disabled}

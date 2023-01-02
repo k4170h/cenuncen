@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import ImageLoader from './ImageLoader';
 import SavableCanvas from './SavableCanvas';
 import { DecodeOptions } from '../utils/types';
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { decodeImageData } from '../utils/convertUtils';
 import DecodeForm from './DecodeForm';
 import { ButtonLi, ButtonUl } from './ButtonWrapper';
@@ -14,8 +14,10 @@ const Decoder = () => {
   const [decodedImageData, setDecodedImageData] = useState<ImageData | null>(
     null
   );
+  const [error, setError] = useState('');
 
   const onImageLoaded = useCallback((imageData: ImageData) => {
+    setError('');
     try {
       setImageData(imageData);
 
@@ -23,8 +25,7 @@ const Decoder = () => {
 
       setDecodedImageData(decodedImageData);
     } catch (e) {
-      alert('デコード失敗:' + e);
-      console.error('failed decode from local file.' + e);
+      setError('デコード失敗[' + e + ']');
     }
   }, []);
 
@@ -54,9 +55,10 @@ const Decoder = () => {
           </ButtonLi>
         </ButtonUl>
         <Box m={4} width="100%">
+          {error && <Typography color={'#c00'}>{error}</Typography>}
           {imageData && !decodedImageData && (
             <>
-              <SavableCanvas imageData={imageData} title="デコード前" />
+              <SavableCanvas imageData={imageData} title="Failed" />
             </>
           )}
           {decodedImageData && (

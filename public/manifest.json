@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
 
-  "name": "Chrome Extension TypeScript Starter",
-  "description": "Chrome Extension, TypeScript, Visual Studio Code",
+  "name": "uncen",
+  "description": "uncensoring my art",
   "version": "1.0",
 
   "options_ui": {
@@ -25,6 +25,6 @@
     "service_worker": "js/background.js"
   },
 
-  "permissions": ["storage", "activeTab", "contextMenus", "scripting", "tabs"],
+  "permissions": ["activeTab", "contextMenus", "tabs"],
   "host_permissions": ["<all_urls>"]
 }

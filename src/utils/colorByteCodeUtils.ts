@@ -4,6 +4,7 @@ import { Buffer } from 'buffer';
 import { decode, encode } from '@msgpack/msgpack';
 import { EncodeOptions, Pixel, RectArea } from './types';
 import {
+  DEFAULT_KEY,
   MIN_COLOR_BYTE_BLOCK_WIDTH,
   MIN_RESIZED_IMAGE_WIDTH,
 } from './definition';
@@ -109,11 +110,11 @@ const base64ToObj = (v: string): unknown => {
     } catch (e) {
       // もし末端が"A"じゃなかったら本当のデコード失敗
       if (v.slice(-(retry + 1)).slice(0, 1) !== 'A') {
-        throw new Error('Failed to decode.invalid color byte code.');
+        throw new Error('Couldnt Find ColorByteCode.');
       }
       // 念のため
       if (retry > 4) {
-        throw new Error('Failed to decode.invalid color byte code.');
+        throw new Error('Couldnt Find ColorByteCode.');
       }
 
       // 末端の"A"が"="の可能性を試す
@@ -289,17 +290,28 @@ export const fromData = (
   areas: RectArea[];
   size: [number, number, number];
 } => {
-  return {
+  const result = {
     encodeOptions: {
       gridSize: data.o.g,
       isSwap: data.o.s,
       isRotate: data.o.r,
       isNega: data.o.n,
-      hashKey: data.o.k ? 'dummy' : null,
+      hashKey: data.o.k ? DEFAULT_KEY : null,
     },
     areas: data.c,
     size: data.s,
   };
+  if (
+    !result.encodeOptions ||
+    !result.areas ||
+    result.areas.length === 0 ||
+    !result.size ||
+    result.size.length !== 3
+  ) {
+    throw new Error('Invalid ColorByteCode Type.');
+  }
+
+  return result;
 };
 
 export const toData = (

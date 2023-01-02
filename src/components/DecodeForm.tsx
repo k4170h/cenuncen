@@ -17,7 +17,7 @@ const DecodeForm = ({ onSubmit }: Props) => {
         <ButtonLi>
           <TextField
             type="text"
-            label="Hashkey"
+            label="Key"
             style={{ width: '6em' }}
             size="small"
             onChange={(e) => {

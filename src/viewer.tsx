@@ -1,5 +1,5 @@
 import ReactDOM from 'react-dom';
-import { Box, Button, styled } from '@mui/material';
+import { Box, Button, styled, Typography } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import React from 'react';
 import queryString from 'query-string';
@@ -9,6 +9,7 @@ import SavableCanvas from './components/SavableCanvas';
 import CloseIcon from '@mui/icons-material/Close';
 import DecodeForm from './components/DecodeForm';
 import { DecodeOptions } from './utils/types';
+import CenteringBox from './components/CenteringBox';
 
 const CloseButton = styled(Button)({
   display: 'block',
@@ -30,22 +31,36 @@ const Viewer = () => {
   const [decodedImageData, setDecodedImageData] = useState<ImageData | null>(
     null
   );
+  const [error, setError] = useState('');
   const query = queryString.parse(window.location.search);
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
 
   useEffect(() => {
     if (query.dataUrl) {
       const image = new Image();
       image.src = query.dataUrl as string; // 画像のURLを指定
       image.onload = () => {
-        const [cv, cx] = createCanvasFromImage(image);
-        setImageData(cx.getImageData(0, 0, cv.width, cv.height));
-        const decodedImageData = decodeImageData(
-          cx.getImageData(0, 0, cv.width, cv.height)
-        );
-        setDecodedImageData(decodedImageData);
+        setImage(image);
       };
     }
   }, [query.dataUrl]);
+
+  useEffect(() => {
+    if (!image) {
+      return;
+    }
+    setError('');
+    const [cv, cx] = createCanvasFromImage(image);
+    setImageData(cx.getImageData(0, 0, cv.width, cv.height));
+    try {
+      const decodedImageData = decodeImageData(
+        cx.getImageData(0, 0, cv.width, cv.height)
+      );
+      setDecodedImageData(decodedImageData);
+    } catch (e) {
+      setError('デコード失敗[' + e + ']');
+    }
+  }, [image]);
 
   // キーを指定して再デコード
   const reDecode = useCallback(
@@ -62,9 +77,22 @@ const Viewer = () => {
   );
 
   return (
-    <Box>
-      <DecodeForm onSubmit={reDecode} />
-      <SavableCanvas imageData={decodedImageData} />
+    <CenteringBox>
+      <Box width="100%">
+        {error && <Typography color={'#c00'}>{error}</Typography>}
+        {imageData && !decodedImageData && (
+          <>
+            <SavableCanvas imageData={imageData} title="Failed" />
+          </>
+        )}
+        {decodedImageData && (
+          <>
+            <DecodeForm onSubmit={reDecode} />
+            <Box height="16px" />
+            <SavableCanvas imageData={decodedImageData} title="Result" />
+          </>
+        )}
+      </Box>
       <CloseButton
         onClick={() => {
           window.close();
@@ -72,7 +100,7 @@ const Viewer = () => {
       >
         <CloseIcon fontSize="large" />
       </CloseButton>
-    </Box>
+    </CenteringBox>
   );
 };
 
