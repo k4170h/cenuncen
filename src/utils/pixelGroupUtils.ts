@@ -154,25 +154,61 @@ export const pixelsToImageData = (
   return new ImageData(retPixels, w, h);
 };
 
-// s四方でグループ化していたピクセルを戻す。w,h は s で割り切れないとダメ
-export const groupToPixels = (
+/**
+ * 1隠蔽エリアのPixelGroup[] を Pixel[]にする
+ * @param groups
+ * @param w 横幅
+ * @param h 縦幅
+ * @param gridWidth
+ * @returns
+ */
+export const groupsToPixels = (
   groups: PixelGroup[],
-  w: number,
-  h: number,
+  width: number,
+  height: number,
   gridWidth: number
 ): Pixel[] => {
-  const pixels = new Array(h * w);
-  for (let i = 0; i < h; i += gridWidth) {
-    for (let j = 0; j < w; j += gridWidth) {
-      for (let k = 0; k < gridWidth; k++) {
-        for (let l = 0; l < gridWidth; l++) {
-          pixels[i * w + k * w + j + l] =
-            groups[((i / gridWidth) * w) / gridWidth + j / gridWidth][
-              k * gridWidth + l
-            ];
-        }
-      }
+  const pixels = new Array(width * height);
+  for (let i = 0; i < height; i++) {
+    for (let j = 0; j < width; j++) {
+      const groupIndex =
+        Math.floor(i / gridWidth) * (width / gridWidth) +
+        Math.floor(j / gridWidth);
+      const x = j % gridWidth;
+      const y = i % gridWidth;
+      pixels[i * width + j] = groups[groupIndex][y * gridWidth + x];
     }
   }
   return pixels;
+};
+
+/**
+ * ピクセルをs四方でグループ化。w,h は s で割り切れないとダメ
+ * @param pixels
+ * @param w 元画像の横幅
+ * @param h 元画像の縦幅
+ * @param s
+ * @returns
+ */
+export const pixelsToGroups = (
+  pixels: Pixel[],
+  w: number,
+  h: number,
+  s: number
+): PixelGroup[] => {
+  const groups = new Array(Math.round((w * h) / (s * s)));
+  // そのピクセル配列を s*s でグループ化
+  for (let i = 0; i < h; i += s) {
+    for (let j = 0; j < w; j += s) {
+      const pixelGroup = new Array(Math.round(s * s));
+      for (let k = 0; k < s; k++) {
+        for (let l = 0; l < s; l++) {
+          pixelGroup[Math.round(k * s + l)] =
+            pixels[Math.round(i * w + k * w + j + l)];
+        }
+      }
+      groups[Math.round((i / s) * (w / s) + j / s)] = pixelGroup;
+    }
+  }
+  return groups;
 };

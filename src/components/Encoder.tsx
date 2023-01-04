@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ImageLoader from './ImageLoader';
 import SelectableCanvas from './SelectableCanvas';
-import { EncodeOptions, RectArea } from '../utils/types';
+import { EncodeFormValues, EncodeOptions, RectArea } from '../utils/types';
 import SelectedAreaList from './SelectedAreaList';
 import EncodeForm from './EncodeForm';
 import { Box } from '@mui/material';
@@ -67,7 +67,7 @@ const Encoder = () => {
 
   // エンコードを行う
   const encode = useCallback(
-    (options: EncodeOptions) => {
+    (options: EncodeFormValues) => {
       if (originalImageData == null) {
         throw new Error();
       }

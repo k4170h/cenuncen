@@ -8,7 +8,7 @@ import { Pixel, PixelGroup } from './types';
  * @returns
  */
 export const getContext = (cv: HTMLCanvasElement): CanvasRenderingContext2D => {
-  const ctx = cv.getContext('2d');
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
   if (ctx == null) {
     throw new Error();
   }
@@ -70,37 +70,6 @@ export const imageDataToPixels = (imageData: ImageData): Pixel[] => {
   return new Array(pixels.length / 4).fill(null).map((_, i) => {
     return [pixels[i * 4], pixels[i * 4 + 1], pixels[i * 4 + 2]];
   });
-};
-
-/**
- * ピクセルをs四方でグループ化。w,h は s で割り切れないとダメ
- * @param pixels
- * @param w 元画像の横幅
- * @param h 元画像の縦幅
- * @param s
- * @returns
- */
-export const groupingPixels = (
-  pixels: Pixel[],
-  w: number,
-  h: number,
-  s: number
-): PixelGroup[] => {
-  const groups = new Array(Math.round((w * h) / (s * s)));
-  // そのピクセル配列を s*s でグループ化
-  for (let i = 0; i < h; i += s) {
-    for (let j = 0; j < w; j += s) {
-      const pixelGroup = new Array(Math.round(s * s));
-      for (let k = 0; k < s; k++) {
-        for (let l = 0; l < s; l++) {
-          pixelGroup[Math.round(k * s + l)] =
-            pixels[Math.round(i * w + k * w + j + l)];
-        }
-      }
-      groups[Math.round((i / s) * (w / s) + j / s)] = pixelGroup;
-    }
-  }
-  return groups;
 };
 
 /**

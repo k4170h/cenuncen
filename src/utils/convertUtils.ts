@@ -3,7 +3,6 @@
 import {
   createCanvas,
   createCanvasFromImage,
-  groupingPixels,
   imageDataToPixels,
   resizeImageData,
 } from './canvasUtils';
@@ -24,10 +23,17 @@ import {
   rerotateGroups,
   rotateGroups,
   pixelGroupToImageData,
-  groupToPixels,
   pixelsToImageData,
+  groupsToPixels,
+  pixelsToGroups,
 } from './pixelGroupUtils';
-import { DecodeOptions, EncodeOptions, RectArea } from './types';
+import {
+  DecodeOptions,
+  EncodeFormValues,
+  EncodeOptions,
+  PixelGroup,
+  RectArea,
+} from './types';
 
 /**
  * imageDataの areas に option のシャッフルを適用し、その情報を下部に印字したものを返却する
@@ -39,7 +45,7 @@ import { DecodeOptions, EncodeOptions, RectArea } from './types';
 export const encodeImageData = (
   imageData: ImageData,
   areas: RectArea[],
-  options: EncodeOptions
+  options: EncodeFormValues
 ) => {
   const gs = options.gridSize;
 
@@ -50,33 +56,40 @@ export const encodeImageData = (
 
   const [, ctx] = createCanvasFromImage(imageData);
 
-  // 対象範囲を切り出し、それを裁断、シャッフル
-  const shuffledImageDatas = resizedAreas
-    .map((v) => {
-      const resizedArea = convertRectAreaForGridSize(
-        v,
-        imageData.width,
-        imageData.height,
-        gs
-      );
-      return shuffleImageData(ctx.getImageData(...resizedArea), options);
-    })
-    .flat();
+  // 対象範囲を切り出し、それを裁断
+  const clippedPixelGroups = resizedAreas.reduce((p, c) => {
+    return [...p, ...clipImageData(ctx.getImageData(...c), options.gridSize)];
+  }, [] as PixelGroup[]);
+
+  // それをシャッフル
+  const shuffledPixelGrooups = shufflePixelGrooups(clippedPixelGroups, options);
+
+  // それをImageDataの配列に
+  const shuffledImageDatas = shuffledPixelGrooups.map((v) =>
+    pixelGroupToImageData(v, options.gridSize)
+  );
 
   // そのデータを並べたImageData作る
-  const xCount = Math.floor(imageData.width / gs);
-  const yCount = Math.ceil(shuffledImageDatas.length / xCount);
-  const [shuffledCv, shuffledCx] = createCanvas(
-    xCount * gs + (imageData.width % gs),
-    yCount * gs
-  );
+  const [xCount, yCount] = (() => {
+    switch (options.clipPos) {
+      case 'left':
+      case 'right': {
+        const yCount = Math.floor(imageData.height / gs);
+        const xCount = Math.ceil(shuffledImageDatas.length / yCount);
+        return [xCount, Math.ceil(shuffledImageDatas.length / xCount)];
+      }
+      case 'top':
+      case 'bottom': {
+        const xCount = Math.floor(imageData.width / gs);
+        const yCount = Math.ceil(shuffledImageDatas.length / xCount);
+        return [Math.ceil(shuffledImageDatas.length / yCount), yCount];
+      }
+    }
+  })();
+
+  const [clippedCv, clippedCx] = createCanvas(xCount * gs, yCount * gs);
   shuffledImageDatas.forEach((v, i) => {
-    // shuffledCx.putImageData(v, (i % xCount) * gs, Math.floor(i / xCount) * gs);
-    shuffledCx.putImageData(
-      v,
-      shuffledCv.width - gs - (i % xCount) * gs,
-      Math.floor(i / xCount) * gs
-    );
+    clippedCx.putImageData(v, (i % xCount) * gs, Math.floor(i / xCount) * gs);
   });
 
   // 該当エリアを塗りつぶす
@@ -84,87 +97,97 @@ export const encodeImageData = (
     return fillArea(p, c, options);
   }, imageData);
 
+  // 隠蔽対象のエリア一覧(x,y,xグリッド数,yグリッド数)
+  const gridAreas = resizedAreas.map(
+    (v): RectArea => [v[0], v[1], v[2] / gs, v[3] / gs]
+  );
+
+  // 出力画像のキャンバス
+  const [resultCv, resultCx] =
+    options.clipPos === 'left' || options.clipPos === 'right'
+      ? createCanvas(imageData.width + clippedCv.width, imageData.height)
+      : createCanvas(imageData.width, imageData.height + clippedCv.height);
+
+  // 本画像
+  const mainPosX = options.clipPos === 'left' ? clippedCv.width : 0;
+  const mainPosY = options.clipPos === 'top' ? clippedCv.height : 0;
+
   // 画面下に追加する色バイトコードのImageData作成
-  const data = toData(options, resizedAreas, [
-    imageData.width,
-    imageData.height,
-    imageData.height + shuffledCv.height + 8, // 暫定値
-  ]);
+  const clippedPosX = options.clipPos === 'right' ? imageData.width : 0;
+  const clippedPosY = options.clipPos === 'bottom' ? imageData.height : 0;
   const colorByteCodeImageData = dataToColorByteCode(
-    data,
-    imageData.width,
-    imageData.height
+    options,
+    gridAreas,
+    [clippedPosX, clippedPosY, clippedCv.width / gs, clippedCv.height / gs],
+    [mainPosX, mainPosY, imageData.width, imageData.height],
+    [resultCv.width, resultCv.height]
   );
 
-  // 最終縦幅
-  const height =
-    filledImageData.height + shuffledCv.height + colorByteCodeImageData.height;
-  // 画面下に追加する色バイトコードのImageData作成
-  const data2 = toData(options, resizedAreas, [
-    imageData.width,
-    imageData.height,
-    height, // 最終決定値
-  ]);
-  const colorByteCodeImageData2 = dataToColorByteCode(
-    data2,
-    imageData.width,
-    imageData.height
-  );
-
-  const [resultCv, resultCx] = createCanvas(imageData.width, height);
-
-  resultCx.fillStyle = 'rgb(0,0,0)';
+  // アプトプットの作成
+  resultCv.height += colorByteCodeImageData.height;
+  resultCx.fillStyle = '#' + options.backgroundColor;
   resultCx.fillRect(0, 0, resultCv.width, resultCv.height);
-  resultCx.drawImage(createCanvasFromImage(filledImageData)[0], 0, 0);
-  resultCx.drawImage(shuffledCv, 0, imageData.height);
-  resultCx.drawImage(
-    createCanvasFromImage(colorByteCodeImageData2)[0],
-    0,
-    imageData.height + shuffledCv.height
-  );
-
+  const [filledCv] = createCanvasFromImage(filledImageData);
+  const [codeCv] = createCanvasFromImage(colorByteCodeImageData);
+  resultCx.drawImage(filledCv, mainPosX, mainPosY);
+  resultCx.drawImage(clippedCv, clippedPosX, clippedPosY);
+  resultCx.drawImage(codeCv, 0, resultCv.height - codeCv.height);
   return resultCx.getImageData(0, 0, resultCv.width, resultCv.height);
 };
 
 /**
- * imageDataを grid pxで裁断し、シャッフル、加工したimageDataの配列を返す
+ * imageDataを grid pxで裁断し、PixelGroupの配列を返す
  * @param imageData
  * @param area
  * @param options
  * @returns
  */
-const shuffleImageData = (
+const clipImageData = (
   imageData: ImageData,
-  options: EncodeOptions
-): ImageData[] => {
-  // ピクセルの配列を作る
+  gridSize: number
+): PixelGroup[] => {
+  // ピクセルの配列に変換する
   const beforePixels = imageDataToPixels(imageData);
 
   // そのピクセル配列を gridSize でグループ化
   const cw = imageData.width;
   const ch = imageData.height;
-  let pixelBlocks = groupingPixels(beforePixels, cw, ch, options.gridSize);
+  return pixelsToGroups(beforePixels, cw, ch, gridSize);
+};
 
+/**
+ * PixelGroup[]に裁断された画像を、シャッフル、加工
+ * @param imageData
+ * @param area
+ * @param options
+ * @returns
+ */
+const shufflePixelGrooups = (
+  pixelGroups: PixelGroup[],
+  options: EncodeOptions
+): PixelGroup[] => {
   // ハッシュ
   const hash = createHash(options.hashKey ?? DEFAULT_KEY);
 
+  let result = pixelGroups.map((v) => [...v]);
+
   // グループを並べ替え
   if (options.isSwap) {
-    pixelBlocks = sortByHash(pixelBlocks as [], hash);
+    result = sortByHash(result as [], hash);
   }
 
   // ハッシュで回転(90度ずつ),反転
   if (options.isRotate) {
-    pixelBlocks = rotateGroups(pixelBlocks, hash);
-    pixelBlocks = flipGroups(pixelBlocks, hash);
+    result = rotateGroups(result, hash);
+    result = flipGroups(result, hash);
   }
 
   // ハッシュ値で色反転
   if (options.isNega) {
-    pixelBlocks = negaGroups(pixelBlocks, hash);
+    result = negaGroups(result, hash);
   }
 
-  return pixelBlocks.map((v) => pixelGroupToImageData(v, options.gridSize));
+  return result;
 };
 
 // 切り取り範囲 を gridSize で割り切れるサイズにする.そしてその範囲が画像からはみ出さないようにする
@@ -212,8 +235,6 @@ const fillArea = (
   const gs = options.gridSize;
 
   // グリッド内のPaddingより内側だけを塗りつぶす
-  // cx.fillStyle = 'rgb(255,0,0)';
-  // cx.fillRect(area[0], area[1], area[2], area[3]);
   cx.fillStyle = 'rgb(0,0,0)';
   for (let i = 0; i < area[3]; i += gs) {
     for (let j = 0; j < area[2]; j += gs) {
@@ -243,37 +264,61 @@ export const decodeImageData = (
   // 画像のカラーバイトコードを読む
   const {
     encodeOptions: options,
-    areas,
+    filledAreas,
     size,
+    clippedArea,
+    mainArea,
   } = colorByteCodeToData(imageData);
+
+  const gs = options.gridSize;
+
   const isFullsize = imageData.width === size[0];
 
   // リサイズ前の画像
   const orgImageData = isFullsize
     ? imageData
-    : resizeImageData(imageData, size[0], size[2]);
+    : resizeImageData(imageData, size[0], size[1]);
   const [, orgCx] = createCanvasFromImage(orgImageData);
 
   const scaleX = imageData.width / size[0];
-  const scaleY = imageData.height / size[2];
+  const scaleY = imageData.height / size[1];
 
-  // ブロック単位で切り出し
-  const blockImageDatas = getPixelBlocks(
-    orgCx.getImageData(0, size[1], size[0], orgImageData.height - size[1]),
-    options.gridSize,
-    areas
+  // 切り出していた隠蔽部分をPixelに
+  const clippedPixels = imageDataToPixels(
+    orgCx.getImageData(
+      clippedArea[0],
+      clippedArea[1],
+      clippedArea[2] * gs,
+      clippedArea[3] * gs
+    )
+  );
+
+  // Pixels を PixelGroups に
+  const clippedPixelGroups = pixelsToGroups(
+    clippedPixels,
+    clippedArea[2] * gs,
+    clippedArea[3] * gs,
+    gs
   );
 
   if (formOptions?.hashKey) {
     options.hashKey = formOptions.hashKey;
   }
 
-  areas.forEach((v) => {
-    const len = (v[2] / options.gridSize) * (v[3] / options.gridSize);
-    const targetBlockImages = blockImageDatas.splice(0, len);
+  // シャッフルされていたやつを戻す
+  const unShuffledPixelGroups = unShufflePixelGroup(
+    clippedPixelGroups,
+    options
+  );
 
-    // シャッフルされていたやつを戻す
-    const imageData = unShuffleImageData(targetBlockImages, options, v);
+  filledAreas.forEach((v) => {
+    const len = v[2] * v[3];
+    // 対象のPixelGroupを切り出し
+    const targetPixelGroups = unShuffledPixelGroups.splice(0, len);
+
+    // PixelGroupをPixel → ImageDataへ
+    const pixels = groupsToPixels(targetPixelGroups, v[2] * gs, v[3] * gs, gs);
+    const imageData = pixelsToImageData(pixels, v[2] * gs, v[3] * gs);
 
     const resizedImageData = resizeImageData(
       imageData,
@@ -284,10 +329,10 @@ export const decodeImageData = (
     // 1ブロックずつ移す
     const [, rcx] = createCanvasFromImage(resizedImageData);
     const sgsX = options.gridSize * scaleX;
-    const sgsY = options.gridSize * scaleX;
+    const sgsY = options.gridSize * scaleY;
     const p = 1;
-    for (let i = 0; i < v[3] / options.gridSize; i++) {
-      for (let j = 0; j < v[2] / options.gridSize; j++) {
+    for (let i = 0; i < v[3]; i++) {
+      for (let j = 0; j < v[2]; j++) {
         cx.putImageData(
           rcx.getImageData(
             Math.round(j * sgsX + p * 1),
@@ -295,8 +340,8 @@ export const decodeImageData = (
             Math.round(sgsX - p * 2),
             Math.round(sgsY - p * 2)
           ),
-          Math.round(v[0] * scaleX + j * sgsX + p * 1),
-          Math.round(v[1] * scaleY + i * sgsY + p * 1)
+          Math.round(v[0] * scaleX + j * sgsX + p * 1 + mainArea[0] * scaleX),
+          Math.round(v[1] * scaleY + i * sgsY + p * 1 + mainArea[1] * scaleY)
         );
       }
     }
@@ -307,80 +352,36 @@ export const decodeImageData = (
 };
 
 /**
- * 画像から裁断したやつを切り出しImageData[]に整理する
- * @param imageData オリジナルサイズ
- * @param areas
- */
-const getPixelBlocks = (
-  imageData: ImageData,
-  gridSize: number,
-  areas: RectArea[]
-) => {
-  const [, cx] = createCanvasFromImage(imageData);
-  const result: ImageData[] = [];
-
-  // ブロックが収まっている横幅
-  const w = imageData.width - (imageData.width % gridSize);
-
-  const length = areas.reduce((p, c) => {
-    return p + (c[2] / gridSize) * (c[3] / gridSize);
-  }, 0);
-
-  for (let i = 0; i < length; i++) {
-    // const x = (i * gridSize) % w;
-    const x = imageData.width - gridSize - ((i * gridSize) % w);
-    const y = Math.floor((i * gridSize) / w) * gridSize;
-    result.push(cx.getImageData(x, y, gridSize, gridSize));
-  }
-
-  return result;
-};
-
-/**
  * 加工、シャッフルされていたimageDataの配列をimageDataに戻す
  * @param imageData
  * @param area
  * @param options
  * @returns
  */
-const unShuffleImageData = (
-  imageDatas: ImageData[],
-  options: EncodeOptions,
-  area: RectArea
-): ImageData => {
-  let pixelBlocks = imageDatas.map((v) => {
-    return imageDataToPixels(v);
-  });
+const unShufflePixelGroup = (
+  pixelGroups: PixelGroup[],
+  options: EncodeOptions
+): PixelGroup[] => {
+  let result = pixelGroups.map((v) => [...v]);
 
   // ハッシュ作成
   const hash = createHash(options.hashKey ?? DEFAULT_KEY);
 
   // ハッシュ値で色反転
   if (options.isNega) {
-    pixelBlocks = negaGroups(pixelBlocks, hash);
+    result = negaGroups(result, hash);
   }
 
   // ハッシュで回転(90度ずつ),反転
   if (options.isRotate) {
-    pixelBlocks = flipGroups(pixelBlocks, hash);
-    pixelBlocks = rerotateGroups(pixelBlocks, hash);
+    result = flipGroups(result, hash);
+    result = rerotateGroups(result, hash);
   }
 
   // グループを並べ替え
   if (options.isSwap) {
-    pixelBlocks = resortByHash(pixelBlocks, hash);
+    result = resortByHash(result, hash);
   }
 
-  // グループをピクセルに戻す
-  const decodedPixels = groupToPixels(
-    pixelBlocks,
-    area[2],
-    area[3],
-    options.gridSize
-  );
-
-  // ピクセルをイメージデータに
-  const imageData = pixelsToImageData(decodedPixels, area[2], area[3]);
-
-  return imageData;
+  return result;
 };

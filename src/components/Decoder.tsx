@@ -26,6 +26,7 @@ const Decoder = () => {
       setDecodedImageData(decodedImageData);
     } catch (e) {
       setError('デコード失敗[' + e + ']');
+      console.error(e);
     }
   }, []);
 

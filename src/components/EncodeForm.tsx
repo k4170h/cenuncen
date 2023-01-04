@@ -3,13 +3,16 @@ import {
   Checkbox,
   FormControl,
   FormControlLabel,
+  InputAdornment,
+  Radio,
+  RadioGroup,
   Slider,
   Stack,
   TextField,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useEffect, useState } from 'react';
-import { EncodeOptions } from '../utils/types';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import { ClipPos, EncodeFormValues } from '../utils/types';
 
 import Grid3x3OutlinedIcon from '@mui/icons-material/Grid3x3Outlined';
 import Grid4x4OutlinedIcon from '@mui/icons-material/Grid4x4Outlined';
@@ -19,26 +22,47 @@ import ShuffleIcon from '@mui/icons-material/Shuffle';
 import InvertColorsIcon from '@mui/icons-material/InvertColors';
 import Rotate90DegreesCwIcon from '@mui/icons-material/Rotate90DegreesCw';
 import KeyIcon from '@mui/icons-material/Key';
+import BorderBottomIcon from '@mui/icons-material/BorderBottom';
+import BorderLeftIcon from '@mui/icons-material/BorderLeft';
+import BorderTopIcon from '@mui/icons-material/BorderTop';
+import BorderRightIcon from '@mui/icons-material/BorderRight';
 
 type Props = {
   minGridSize?: number;
-  onSubmit: (options: EncodeOptions) => void;
+  onSubmit: (options: EncodeFormValues) => void;
   disabled: boolean;
 };
 
 const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
   const [gridSize, setGridSize] = useState(8);
   const [isSwap, setIsSwap] = useState(true);
-  const [isNega, setIsNega] = useState(false);
+  const [isNega, setIsNega] = useState(true);
   const [isRotate, setIsRotate] = useState(true);
   const [existsKey, setExistsKey] = useState(false);
   const [hashKey, setHashKey] = useState<string | null>(null);
+  const [pos, setPos] = useState<ClipPos>('bottom');
+  const [colorcode, setColorcode] = useState<string>('000');
+  const [isValid, setIsValid] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (minGridSize != null && gridSize < minGridSize) {
       setGridSize(getNearCeil(minGridSize, 8));
     }
   }, [minGridSize, gridSize]);
+
+  const handleChangeColorcode = useCallback((code: string) => {
+    const pattern = new RegExp(/^([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/);
+
+    if (code == null || !pattern.test(code)) {
+      setIsValid(false);
+      setError('invalid color code.');
+      return;
+    }
+    setError('');
+    setIsValid(true);
+    setColorcode(code);
+  }, []);
 
   return (
     <FormControl style={{ width: '100%' }}>
@@ -57,83 +81,81 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
         />
         <Grid3x3OutlinedIcon color={disabled ? 'disabled' : 'primary'} />
       </Stack>
-
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={isSwap}
-            sx={{
-              marginTop: -1,
-            }}
-          />
-        }
-        label={<ShuffleIcon />}
-        disabled={disabled}
-        onChange={(_, v) => {
-          setIsSwap(v);
-        }}
-      />
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={isNega}
-            sx={{
-              marginTop: -1,
-            }}
-          />
-        }
-        label={<InvertColorsIcon />}
-        disabled={disabled}
-        onChange={(_, v) => {
-          setIsNega(v);
-        }}
-      />
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={isRotate}
-            sx={{
-              marginTop: -1,
-            }}
-          />
-        }
-        label={<Rotate90DegreesCwIcon />}
-        disabled={disabled}
-        onChange={(_, v) => {
-          setIsRotate(v);
-        }}
-      />
-      <Box display="flex" mb={2}>
-        <FormControlLabel
-          control={
-            <Checkbox
-              sx={{
-                marginTop: -1,
+      <Box>
+        {getIconCheckbox(isSwap, disabled, setIsSwap, <ShuffleIcon />)}
+        {getIconCheckbox(isNega, disabled, setIsNega, <InvertColorsIcon />)}
+        {getIconCheckbox(
+          isRotate,
+          disabled,
+          setIsRotate,
+          <Rotate90DegreesCwIcon />
+        )}
+        <Box display="flex" alignItems="center">
+          {getIconCheckbox(null, disabled, setExistsKey, <KeyIcon />)}
+          {existsKey && (
+            <TextField
+              type="text"
+              label="Key"
+              style={{ width: '6em' }}
+              size="small"
+              disabled={disabled}
+              onChange={(e) => {
+                setHashKey(e.target.value);
               }}
             />
-          }
-          label={<KeyIcon />}
-          disabled={disabled}
-          onChange={(_, v) => {
-            setExistsKey(v);
-          }}
-        />
-        {existsKey && (
-          <TextField
-            type="text"
-            label="Key"
-            style={{ width: '6em' }}
-            size="small"
-            disabled={disabled}
-            onChange={(e) => {
-              setHashKey(e.target.value);
-            }}
-          />
-        )}
+          )}
+        </Box>
       </Box>
+      <RadioGroup
+        row
+        defaultValue="bottom"
+        onChange={(_, v) => setPos(v as ClipPos)}
+      >
+        <FormControlLabel
+          value="bottom"
+          control={<Radio />}
+          label={<BorderBottomIcon />}
+          disabled={disabled}
+        />
+        <FormControlLabel
+          value="left"
+          control={<Radio />}
+          label={<BorderLeftIcon />}
+          disabled={disabled}
+        />
+        <FormControlLabel
+          value="top"
+          control={<Radio />}
+          label={<BorderTopIcon />}
+          disabled={disabled}
+        />
+        <FormControlLabel
+          value="right"
+          control={<Radio />}
+          label={<BorderRightIcon />}
+          disabled={disabled}
+        />
+      </RadioGroup>
+
+      <TextField
+        type="text"
+        label="colorcode"
+        defaultValue={colorcode}
+        style={{ width: '12em' }}
+        size="small"
+        disabled={disabled}
+        onChange={(e) => {
+          handleChangeColorcode(e.target.value);
+        }}
+        InputProps={{
+          startAdornment: <InputAdornment position="start">#</InputAdornment>,
+        }}
+        error={!!error}
+        helperText={error}
+      />
       <Button
         variant="contained"
-        disabled={disabled}
+        disabled={disabled || !isValid}
         onClick={() => {
           onSubmit({
             gridSize,
@@ -141,6 +163,8 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
             isNega,
             isRotate,
             hashKey: existsKey ? hashKey : null,
+            clipPos: pos,
+            backgroundColor: colorcode,
           });
         }}
       >
@@ -151,3 +175,28 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
 };
 
 export default EncodeForm;
+
+const getIconCheckbox = (
+  value: boolean | null,
+  disabled: boolean,
+  onChange: (v: boolean) => void,
+  label: ReactNode
+) => {
+  return (
+    <FormControlLabel
+      control={
+        <Checkbox
+          {...{ checked: value !== null ? value : undefined }}
+          sx={{
+            marginTop: -1,
+          }}
+        />
+      }
+      label={label}
+      disabled={disabled}
+      onChange={(_, v) => {
+        onChange(v);
+      }}
+    />
+  );
+};

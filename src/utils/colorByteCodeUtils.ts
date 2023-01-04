@@ -198,12 +198,12 @@ const readColorByteCode = (imageData: ImageData) => {
   const blockWidth = imageData.width / blockCountX;
 
   // バージョンを拾う
-  const version = colorToNum(
-    imageData.getPixelColor(
-      blockWidth + blockWidth / 2,
-      imageData.height - blockWidth / 2
-    )
-  );
+  // const version = colorToNum(
+  //   imageData.getPixelColor(
+  //     blockWidth + blockWidth / 2,
+  //     imageData.height - blockWidth / 2
+  //   )
+  // );
 
   // 以降は バージョン=1 の読み込み方法
   // もし別バージョンのカラーバイトコードを編み出したらここを分岐させる
@@ -247,29 +247,58 @@ const readColorByteCode = (imageData: ImageData) => {
 
 // カラーバイトコードを作る
 export const dataToColorByteCode = (
-  data: unknown,
-  width: number,
-  height: number
+  encodeOptions: EncodeOptions,
+  filledAreas: RectArea[],
+  clipArea: RectArea,
+  mainArea: RectArea,
+  size: [number, number]
 ) => {
+  // データ作成
+  const data = toData({
+    encodeOptions,
+    filledAreas,
+    clipArea,
+    mainArea,
+    size,
+  });
+
+  // 1行あたりのブロック数
+  // 画像の長辺が MIN_RESIZED_IMAGE_WIDTH px までリサイズされたときに MIN_BLOCK_WIDTH px になる大きさ
+  const longStroke = size[0] < size[1] ? size[1] : size[0];
+  const blockWidth = Math.ceil(
+    (MIN_COLOR_BYTE_BLOCK_WIDTH * longStroke) / MIN_RESIZED_IMAGE_WIDTH
+  );
+  const blockCountX = Math.floor(size[0] / blockWidth);
+
+  // 印字用データ
+  const byte64Str_ = objToBase64(data);
+
+  // 事前に高さを算出してデータを再編集  5はJson以外の固定データ
+  const height = Math.ceil((byte64Str_.length + 4) / blockCountX) * blockWidth;
+  console.log(
+    'length',
+    byte64Str_.length,
+    'blockWidth',
+    blockWidth,
+    'blockCountX',
+    blockCountX,
+    'cbc height',
+    height
+  );
+
+  data.s[1] += height;
+
   // 印字用データ
   const byte64Str = objToBase64(data);
 
   // 印字するカラーバイトコード
   const colorByteCodes = base64StringToColors(byte64Str);
 
-  // 1行あたりのブロック数
-  // 画像の長辺が MIN_RESIZED_IMAGE_WIDTH px までリサイズされたときに MIN_BLOCK_WIDTH px になる大きさ
-  const longStroke = width < height ? height : width;
-  const blockWidth = Math.ceil(
-    (MIN_COLOR_BYTE_BLOCK_WIDTH * longStroke) / MIN_RESIZED_IMAGE_WIDTH
-  );
-  const blockCountX = Math.floor(width / blockWidth);
-
   // 印字
   const colorByteCodeImageData = drawColorByteCodeBlock(
     colorByteCodes,
     blockCountX,
-    width
+    size[0]
   );
 
   return colorByteCodeImageData;
@@ -287,8 +316,10 @@ export const fromData = (
   data: any
 ): {
   encodeOptions: EncodeOptions;
-  areas: RectArea[];
-  size: [number, number, number];
+  filledAreas: RectArea[];
+  size: [number, number];
+  clippedArea: RectArea;
+  mainArea: RectArea;
 } => {
   const result = {
     encodeOptions: {
@@ -298,30 +329,46 @@ export const fromData = (
       isNega: data.o.n,
       hashKey: data.o.k ? DEFAULT_KEY : null,
     },
-    areas: data.c,
+    filledAreas: data.c,
     size: data.s,
+    clippedArea: data.g,
+    mainArea: data.p,
   };
   if (
     !result.encodeOptions ||
-    !result.areas ||
-    result.areas.length === 0 ||
+    !result.filledAreas ||
+    result.filledAreas.length === 0 ||
     !result.size ||
-    result.size.length !== 3
+    result.size.length !== 2 ||
+    !result.clippedArea ||
+    result.clippedArea.length !== 4 ||
+    !result.mainArea ||
+    result.mainArea.length !== 4
   ) {
     throw new Error('Invalid ColorByteCode Type.');
   }
-
+  console.log('data loaded', result);
   return result;
 };
 
-export const toData = (
-  encodeOptions: EncodeOptions,
-  areas: RectArea[],
-  size: [number, number, number]
-) => {
-  return {
-    // w: size[0],
-    // h: size[1],
+export const toData = ({
+  encodeOptions,
+  filledAreas,
+  clipArea,
+  mainArea,
+  size,
+}: {
+  encodeOptions: EncodeOptions;
+  // 隠蔽エリア [x,y,w/gridSize,h/gridSize]
+  filledAreas: RectArea[];
+  // 隠蔽で切り取った画像 [x,y,w/gridSize,h/gridSize]
+  clipArea: RectArea;
+  // メイン画像[x,y,w,h]
+  mainArea: RectArea;
+  // 最終的な画像サイズ [w,h]
+  size: [number, number];
+}) => {
+  console.log('data saved', {
     s: size,
     o: {
       k: encodeOptions.hashKey != null ? 1 : 0,
@@ -330,6 +377,21 @@ export const toData = (
       g: encodeOptions.gridSize,
       r: encodeOptions.isRotate ? 1 : 0,
     },
-    c: areas,
+    c: filledAreas,
+    g: clipArea,
+    p: mainArea,
+  });
+  return {
+    s: size,
+    o: {
+      k: encodeOptions.hashKey != null ? 1 : 0,
+      s: encodeOptions.isSwap ? 1 : 0,
+      n: encodeOptions.isNega ? 1 : 0,
+      g: encodeOptions.gridSize,
+      r: encodeOptions.isRotate ? 1 : 0,
+    },
+    c: filledAreas,
+    g: clipArea,
+    p: mainArea,
   };
 };
