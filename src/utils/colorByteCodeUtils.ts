@@ -313,6 +313,7 @@ export const colorByteCodeToData = (imageData: ImageData) => {
 };
 
 export const fromData = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any
 ): {
   encodeOptions: EncodeOptions;

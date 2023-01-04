@@ -6,11 +6,7 @@ import {
   imageDataToPixels,
   resizeImageData,
 } from './canvasUtils';
-import {
-  colorByteCodeToData,
-  dataToColorByteCode,
-  toData,
-} from './colorByteCodeUtils';
+import { colorByteCodeToData, dataToColorByteCode } from './colorByteCodeUtils';
 import {
   DEFAULT_KEY,
   MIN_PIXEL_GROUP_PADDING,

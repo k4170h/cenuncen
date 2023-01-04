@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ImageLoader from './ImageLoader';
 import SelectableCanvas from './SelectableCanvas';
-import { EncodeFormValues, EncodeOptions, RectArea } from '../utils/types';
+import { EncodeFormValues, RectArea } from '../utils/types';
 import SelectedAreaList from './SelectedAreaList';
 import EncodeForm from './EncodeForm';
 import { Box } from '@mui/material';

@@ -1,6 +1,6 @@
 // CanvasやImageDataに関するUtil
 
-import { Pixel, PixelGroup } from './types';
+import { Pixel } from './types';
 
 /**
  * Canvas から 2D コンテキストを取得する
