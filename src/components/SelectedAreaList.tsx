@@ -8,6 +8,7 @@ import {
   TableRow,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { COLOR_PALETTE } from '../utils/definition';
 
 type Props = {
   selectedAreas: RectArea[];
@@ -28,6 +29,7 @@ const SelectedAreaList = ({ selectedAreas, onUpdateList }: Props) => {
     <Table sx={{ width: 400 }} size="small">
       <TableHead>
         <TableRow>
+          <TableCell padding="none"></TableCell>
           <TableCell align="center">X</TableCell>
           <TableCell align="center">Y</TableCell>
           <TableCell align="center">W</TableCell>
@@ -50,6 +52,13 @@ const SelectedAreaList = ({ selectedAreas, onUpdateList }: Props) => {
               key={key}
               sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
             >
+              <TableCell
+                padding="none"
+                style={{
+                  width: '4px',
+                  backgroundColor: COLOR_PALETTE[i % COLOR_PALETTE.length],
+                }}
+              ></TableCell>
               <TableCell align="center">{v[0]}</TableCell>
               <TableCell align="center">{v[1]}</TableCell>
               <TableCell align="center">{v[2]}</TableCell>

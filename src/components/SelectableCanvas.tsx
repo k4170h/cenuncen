@@ -9,6 +9,7 @@ import {
 } from '../utils/canvasUtils';
 import { getNear } from '../utils/mathUtils';
 import { ButtonLi, ButtonUl } from './ButtonWrapper';
+import { COLOR_PALETTE } from '../utils/definition';
 
 const CanvasBase = styled(Box)({
   boxShadow: 'inset 0 1px 3px 0px rgba(0,0,0,.2)',
@@ -63,10 +64,11 @@ const SelectableCanvas = ({
     // 選択済み矩形を反映したimageDataを用意
     const [cv, ctx] = createCanvasFromImage(imageData);
 
-    selectedAreas.forEach((v) => {
-      ctx.fillStyle = 'rgba(0,0,0,.5)';
+    selectedAreas.forEach((v, i) => {
+      const color = COLOR_PALETTE[i % COLOR_PALETTE.length];
+      ctx.fillStyle = color + '33';
       ctx.fillRect(...v);
-      ctx.strokeStyle = 'rgba(0,0,0)';
+      ctx.strokeStyle = color;
       ctx.strokeRect(...v);
     });
     setBaseImageData(ctx.getImageData(0, 0, cv.width, cv.height));
@@ -141,6 +143,10 @@ const SelectableCanvas = ({
   const handleMouseUp = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
       setMouseDown(false);
+
+      if (startPos[0] === endPos[0] || startPos[1] === endPos[1]) {
+        return;
+      }
       if (
         startPos[0] !== 0 ||
         startPos[1] !== 0 ||

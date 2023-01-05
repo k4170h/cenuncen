@@ -92,7 +92,7 @@ export const encodeImageData = (
 
   // 該当エリアを塗りつぶす
   const filledImageData = resizedAreas.reduce((p, c) => {
-    return fillArea(p, c, options);
+    return fillArea(p, c, options, '#' + options.backgroundColor);
   }, imageData);
 
   // 隠蔽対象のエリア一覧(x,y,xグリッド数,yグリッド数)
@@ -228,7 +228,8 @@ export const convertRectAreaForGridSize = (
 const fillArea = (
   imageData: ImageData,
   area: RectArea,
-  options: EncodeOptions
+  options: EncodeOptions,
+  colorCode: string
 ) => {
   const [cv, cx] = createCanvasFromImage(imageData);
 
@@ -242,7 +243,7 @@ const fillArea = (
   const gs = options.gridSize;
 
   // グリッド内のPaddingより内側だけを塗りつぶす
-  cx.fillStyle = 'rgb(0,0,0)';
+  cx.fillStyle = colorCode;
   for (let i = 0; i < area[3]; i += gs) {
     for (let j = 0; j < area[2]; j += gs) {
       cx.fillRect(

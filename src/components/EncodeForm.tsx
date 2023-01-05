@@ -184,6 +184,7 @@ const getIconCheckbox = (
 ) => {
   return (
     <FormControlLabel
+      style={{ display: 'block' }}
       control={
         <Checkbox
           {...{ checked: value !== null ? value : undefined }}
