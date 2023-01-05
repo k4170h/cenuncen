@@ -22,6 +22,8 @@ import {
   pixelsToImageData,
   groupsToPixels,
   pixelsToGroups,
+  highContrastGroups,
+  lowContrastGroups,
 } from './pixelGroupUtils';
 import {
   DecodeOptions,
@@ -180,6 +182,7 @@ const shufflePixelGrooups = (
 
   // ハッシュ値で色反転
   if (options.isNega) {
+    result = highContrastGroups(result);
     result = negaGroups(result, hash);
   }
 
@@ -195,13 +198,21 @@ export const convertRectAreaForGridSize = (
 ): RectArea => {
   let [cx, cy, cw, ch] = [...area];
   if (cw % blockWidth !== 0) {
+    cx = cx - (blockWidth - (cw % blockWidth)) / 2;
     cw = cw + (blockWidth - (cw % blockWidth));
   }
   if (ch % blockWidth !== 0) {
+    cy = cy - (blockWidth - (ch % blockWidth)) / 2;
     ch = ch + (blockWidth - (ch % blockWidth));
+  }
+  if (cx < 0) {
+    cx = cx = 0;
   }
   if (width < cx + cw) {
     cx = cx - (cx + cw - width);
+  }
+  if (cy < 0) {
+    cy = 0;
   }
   if (height < cy + ch) {
     cy = cy - (cy + ch - height);
@@ -301,9 +312,17 @@ export const decodeImageData = (
     options.hashKey = formOptions.hashKey;
   }
 
+  // 末端あたりのゴミデータのぞく
+  const filterdPixelGroups = clippedPixelGroups.splice(
+    0,
+    filledAreas.reduce((p, c) => {
+      return p + c[2] * c[3];
+    }, 0)
+  );
+
   // シャッフルされていたやつを戻す
   const unShuffledPixelGroups = unShufflePixelGroup(
-    clippedPixelGroups,
+    filterdPixelGroups,
     options
   );
 
@@ -366,6 +385,7 @@ const unShufflePixelGroup = (
   // ハッシュ値で色反転
   if (options.isNega) {
     result = negaGroups(result, hash);
+    result = lowContrastGroups(result);
   }
 
   // ハッシュで回転(90度ずつ),反転

@@ -1,7 +1,56 @@
 // PixelGroup に対する加工関連Util
 
+import { CONTRAST_LEVEL } from './definition';
 import { generateNumArrByHash } from './mathUtils';
 import { Pixel, PixelGroup } from './types';
+
+/**
+ * PixelGroup の色味を2倍にする
+ * @param groups
+ * @param hash
+ * @returns
+ */
+export const highContrastGroups = (groups: PixelGroup[]) => {
+  return groups.map(highContrastGroup);
+};
+const highContrastGroup = (group: PixelGroup) => {
+  return group.map(highContrastPixel);
+};
+const highContrastPixel = (pixel: Pixel): Pixel => {
+  const result = ([0, 1, 2] as const).map((v) => {
+    const col = pixel[v];
+    if (col >= 128) {
+      return col + (255 - col) / CONTRAST_LEVEL;
+    } else {
+      return col - col / CONTRAST_LEVEL;
+    }
+  });
+  return result as Pixel;
+};
+
+/**
+ * PixelGroup の色味を1/2にする
+ * @param groups
+ * @param hash
+ * @returns
+ */
+export const lowContrastGroups = (groups: PixelGroup[]) => {
+  return groups.map(lowContrastGroup);
+};
+const lowContrastGroup = (group: PixelGroup) => {
+  return group.map(lowContrastPixel);
+};
+const lowContrastPixel = (pixel: Pixel): Pixel => {
+  const result = ([0, 1, 2] as const).map((v) => {
+    const col = pixel[v];
+    if (col >= 128) {
+      return 255 - (255 - col) * (CONTRAST_LEVEL / (CONTRAST_LEVEL - 1));
+    } else {
+      return (col * CONTRAST_LEVEL) / (CONTRAST_LEVEL - 1);
+    }
+  });
+  return result as Pixel;
+};
 
 /**
  * PixelGroup の色を hash によって ネガ反転
@@ -11,12 +60,10 @@ import { Pixel, PixelGroup } from './types';
  */
 export const negaGroups = (groups: PixelGroup[], hash: string) => {
   const hashNums = generateNumArrByHash(hash);
-  const ret = new Array(groups.length);
-  for (let i = 0; i < groups.length; i++) {
+  return groups.map((v, i) => {
     const h = (hashNums[i % hashNums.length] % 7) + 1;
-    ret[i] = negaGroup(groups[i], [h & 1, h & 2, h & 4]);
-  }
-  return ret;
+    return negaGroup(v, [h & 1, h & 2, h & 4]);
+  });
 };
 const negaGroup = (group: PixelGroup, pattern = [1, 1, 1]) => {
   return group.map((pixel) => {
