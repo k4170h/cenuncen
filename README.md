@@ -10,15 +10,11 @@ npm install
 npm run build
 ```
 
-## Build in watch mode
-
-### terminal
+## Run
 
 ```
 npm run watch
 ```
-
-'webpack.dev.js' に書いてある output/path に適宜上書きされる
 
 ## Started with
 
