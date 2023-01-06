@@ -4,7 +4,6 @@ import { Buffer } from 'buffer';
 import { decode, encode } from '@msgpack/msgpack';
 import { EncodeOptions, Pixel, RectArea } from './types';
 import {
-  DEFAULT_KEY,
   MIN_COLOR_BYTE_BLOCK_WIDTH,
   MIN_RESIZED_IMAGE_WIDTH,
 } from './definition';
@@ -89,7 +88,7 @@ const getNearIndex = (v: number, partition: number, max = 255) => {
 
 // オブジェクトをJSON→Uint8Array→Base64にする
 const objToBase64 = (v: unknown) => {
-  return Buffer.from(encode(v)).toString('base64');
+  return Buffer.from(encode(JSON.parse(JSON.stringify(v)))).toString('base64');
 };
 
 // base64をUint8Array→JSON→オブジェクトに変換する
@@ -150,10 +149,6 @@ const drawColorByteCodeBlock = (
   // 最初の行の右端にデータを挿入
   if (colorByteCodes.length < blockCountX - 1) {
     // 無意味なデータを埋めて横幅一杯にして埋め込む
-    // colorByteCodes.push(
-    //   ...new Array(blockCountX - colorByteCodes.length - 1).fill([
-    //     255, 255, 255,
-    //   ])
     colorByteCodes.push(
       ...new Array(blockCountX - colorByteCodes.length - 1).fill(null)
     );
@@ -261,6 +256,7 @@ export const dataToColorByteCode = (
     mainArea,
     size,
   });
+  console.log('save', data);
 
   // 1行あたりのブロック数
   // 画像の長辺が MIN_RESIZED_IMAGE_WIDTH px までリサイズされたときに MIN_BLOCK_WIDTH px になる大きさ
@@ -274,7 +270,7 @@ export const dataToColorByteCode = (
   const byte64Str_ = objToBase64(data);
 
   // 事前に高さを算出してデータを再編集  5はJson以外の固定データ
-  const height = Math.ceil((byte64Str_.length + 4) / blockCountX) * blockWidth;
+  const height = Math.ceil((byte64Str_.length + 5) / blockCountX) * blockWidth;
 
   data.s[1] += height;
 
@@ -318,7 +314,8 @@ export const fromData = (
       isSwap: data.o.s,
       isRotate: data.o.r,
       isNega: data.o.n,
-      hashKey: data.o.k ? DEFAULT_KEY : null,
+      // hashKey: data.o.k ? DEFAULT_KEY : undefined,
+      shiftColor: data.o.c,
     },
     filledAreas: data.c,
     size: data.s,
@@ -338,6 +335,23 @@ export const fromData = (
   ) {
     throw new Error('Invalid ColorByteCode Type.');
   }
+
+  if (result.encodeOptions.shiftColor) {
+    const cs = result.encodeOptions.shiftColor;
+    if (!cs.length || cs.length !== 2) {
+      result.encodeOptions.shiftColor = undefined;
+    } else if (!cs[0] || cs[0] <= 0 || 1 <= cs[0]) {
+      result.encodeOptions.shiftColor = undefined;
+    } else if (cs[1] < 0 || 7 < cs[1]) {
+      result.encodeOptions.shiftColor = undefined;
+    } else {
+      result.encodeOptions.shiftColor = {
+        contrast: Number(cs[0]),
+        color: Number(cs[1]),
+      };
+    }
+  }
+
   console.log('load', result);
   return result;
 };
@@ -362,11 +376,14 @@ export const toData = ({
   return {
     s: size,
     o: {
-      k: encodeOptions.hashKey != null ? 1 : 0,
-      s: encodeOptions.isSwap ? 1 : 0,
-      n: encodeOptions.isNega ? 1 : 0,
+      // k: encodeOptions.hashKey != null ? 1 : 0,
+      s: encodeOptions.isSwap ? 1 : undefined,
+      n: encodeOptions.isNega ? 1 : undefined,
       g: encodeOptions.gridSize,
-      r: encodeOptions.isRotate ? 1 : 0,
+      r: encodeOptions.isRotate ? 1 : undefined,
+      c: encodeOptions.shiftColor
+        ? [encodeOptions.shiftColor.contrast, encodeOptions.shiftColor.color]
+        : undefined,
     },
     c: filledAreas,
     g: clipArea,

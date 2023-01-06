@@ -65,10 +65,12 @@ const SelectableCanvas = ({
     const [cv, ctx] = createCanvasFromImage(imageData);
 
     selectedAreas.forEach((v, i) => {
-      const color = COLOR_PALETTE[i % COLOR_PALETTE.length];
-      ctx.fillStyle = color + '33';
+      ctx.fillStyle = '#000';
       ctx.fillRect(...v);
-      ctx.strokeStyle = color;
+    });
+
+    selectedAreas.forEach((v, i) => {
+      ctx.strokeStyle = COLOR_PALETTE[i % COLOR_PALETTE.length];
       ctx.strokeRect(...v);
     });
     setBaseImageData(ctx.getImageData(0, 0, cv.width, cv.height));

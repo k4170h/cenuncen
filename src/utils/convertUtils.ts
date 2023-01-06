@@ -22,8 +22,10 @@ import {
   pixelsToImageData,
   groupsToPixels,
   pixelsToGroups,
-  highContrastGroups,
   lowContrastGroups,
+  restoreLowContrastGroups,
+  shiftColorGroups,
+  unShiftColorGroups,
 } from './pixelGroupUtils';
 import {
   DecodeOptions,
@@ -182,10 +184,18 @@ const shufflePixelGrooups = (
 
   // ハッシュ値で色反転
   if (options.isNega) {
-    result = highContrastGroups(result);
     result = negaGroups(result, hash);
   }
 
+  // 色シフト ()
+  if (options.shiftColor) {
+    result = lowContrastGroups(result, options.shiftColor.contrast);
+    result = shiftColorGroups(
+      result,
+      options.shiftColor.contrast,
+      options.shiftColor.color
+    );
+  }
   return result;
 };
 
@@ -383,10 +393,19 @@ const unShufflePixelGroup = (
   // ハッシュ作成
   const hash = createHash(options.hashKey ?? DEFAULT_KEY);
 
+  // 色シフト
+  if (options.shiftColor) {
+    result = unShiftColorGroups(
+      result,
+      options.shiftColor.contrast,
+      options.shiftColor.color
+    );
+    result = restoreLowContrastGroups(result, options.shiftColor.contrast);
+  }
+
   // ハッシュ値で色反転
   if (options.isNega) {
     result = negaGroups(result, hash);
-    result = lowContrastGroups(result);
   }
 
   // ハッシュで回転(90度ずつ),反転

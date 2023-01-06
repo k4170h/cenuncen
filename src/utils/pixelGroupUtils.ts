@@ -1,55 +1,99 @@
 // PixelGroup に対する加工関連Util
 
-import { CONTRAST_LEVEL } from './definition';
 import { generateNumArrByHash } from './mathUtils';
 import { Pixel, PixelGroup } from './types';
 
 /**
- * PixelGroup の色味を2倍にする
+ * PixelGroup の色味を薄くする
  * @param groups
  * @param hash
  * @returns
  */
-export const highContrastGroups = (groups: PixelGroup[]) => {
-  return groups.map(highContrastGroup);
-};
-const highContrastGroup = (group: PixelGroup) => {
-  return group.map(highContrastPixel);
-};
-const highContrastPixel = (pixel: Pixel): Pixel => {
-  const result = ([0, 1, 2] as const).map((v) => {
-    const col = pixel[v];
-    if (col >= 128) {
-      return col + (255 - col) / CONTRAST_LEVEL;
-    } else {
-      return col - col / CONTRAST_LEVEL;
-    }
+export const lowContrastGroups = (
+  groups: PixelGroup[],
+  contrastLevel: number
+) => {
+  return groups.map((group) => {
+    return group.map((pixel) => {
+      return ([0, 1, 2] as const).map((v) => {
+        const col = pixel[v];
+        if (col >= 128) {
+          return 128 + (col - 128) * contrastLevel;
+        } else {
+          return 128 - (128 - col) * contrastLevel;
+        }
+      }) as Pixel;
+    });
   });
-  return result as Pixel;
 };
 
 /**
- * PixelGroup の色味を1/2にする
+ * PixelGroup の薄くなっていた色味を戻す
  * @param groups
  * @param hash
  * @returns
  */
-export const lowContrastGroups = (groups: PixelGroup[]) => {
-  return groups.map(lowContrastGroup);
-};
-const lowContrastGroup = (group: PixelGroup) => {
-  return group.map(lowContrastPixel);
-};
-const lowContrastPixel = (pixel: Pixel): Pixel => {
-  const result = ([0, 1, 2] as const).map((v) => {
-    const col = pixel[v];
-    if (col >= 128) {
-      return 255 - (255 - col) * (CONTRAST_LEVEL / (CONTRAST_LEVEL - 1));
-    } else {
-      return (col * CONTRAST_LEVEL) / (CONTRAST_LEVEL - 1);
-    }
+export const restoreLowContrastGroups = (
+  groups: PixelGroup[],
+  contrastLevel: number
+) => {
+  return groups.map((group) => {
+    return group.map((pixel) => {
+      return ([0, 1, 2] as const).map((v) => {
+        const col = pixel[v];
+        if (col >= 128) {
+          return 128 + (1 / contrastLevel) * (col - 128);
+        } else {
+          return 128 - (1 / contrastLevel) * (128 - col);
+        }
+      }) as Pixel;
+    });
   });
-  return result as Pixel;
+};
+
+/**
+ *
+ * @param groups
+ * @param color [0-7].これを2進にする
+ * @returns
+ */
+export const shiftColorGroups = (
+  groups: PixelGroup[],
+  contrastLevel: number,
+  color: number
+) => {
+  const colors = ('00' + color.toString(2)).slice(-3).split('');
+  console.log(color, colors, color.toString(2).slice(-3));
+  return groups.map((group) => {
+    return group.map((pixel) => {
+      return ([0, 1, 2] as const).map(
+        (v) =>
+          pixel[v] - (128 - 128 * contrastLevel) * (colors[v] === '1' ? -1 : 1)
+      ) as Pixel;
+    });
+  });
+};
+
+/**
+ *
+ * @param groups
+ * @param color [0-7].これを2進にする
+ * @returns
+ */
+export const unShiftColorGroups = (
+  groups: PixelGroup[],
+  contrastLevel: number,
+  color: number
+) => {
+  const colors = ('00' + color.toString(2)).slice(-3).split('');
+  return groups.map((group) => {
+    return group.map((pixel) => {
+      return ([0, 1, 2] as const).map(
+        (v) =>
+          pixel[v] - (128 - 128 * contrastLevel) * (colors[v] === '1' ? 1 : -1)
+      ) as Pixel;
+    });
+  });
 };
 
 /**

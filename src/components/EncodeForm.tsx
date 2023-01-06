@@ -26,6 +26,7 @@ import BorderBottomIcon from '@mui/icons-material/BorderBottom';
 import BorderLeftIcon from '@mui/icons-material/BorderLeft';
 import BorderTopIcon from '@mui/icons-material/BorderTop';
 import BorderRightIcon from '@mui/icons-material/BorderRight';
+import OpacityIcon from '@mui/icons-material/Opacity';
 
 type Props = {
   minGridSize?: number;
@@ -44,6 +45,9 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
   const [colorcode, setColorcode] = useState<string>('000');
   const [isValid, setIsValid] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [contrastLevel, setContrastLevel] = useState(0.5);
+  const [isColorShift, setIsColorShift] = useState(false);
+  const [shiftColor, setShiftColor] = useState<number>(0);
 
   useEffect(() => {
     if (minGridSize != null && gridSize < minGridSize) {
@@ -83,12 +87,59 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
       </Stack>
       <Box>
         {getIconCheckbox(isSwap, disabled, setIsSwap, <ShuffleIcon />)}
-        {getIconCheckbox(isNega, disabled, setIsNega, <InvertColorsIcon />)}
         {getIconCheckbox(
           isRotate,
           disabled,
           setIsRotate,
           <Rotate90DegreesCwIcon />
+        )}
+        {getIconCheckbox(isNega, disabled, setIsNega, <InvertColorsIcon />)}
+        <Box alignItems="center" display="flex">
+          {getIconCheckbox(null, disabled, setIsColorShift, <OpacityIcon />)}
+          {isColorShift && (
+            <TextField
+              type="number"
+              label="contrastLevel"
+              style={{ width: '12em' }}
+              size="small"
+              disabled={disabled}
+              defaultValue={contrastLevel}
+              onChange={(e) => {
+                setContrastLevel(Number(e.target.value));
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">0 &lt;</InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">&lt; 1</InputAdornment>
+                ),
+              }}
+              inputProps={{
+                step: 0.1,
+                min: 0.1,
+                max: 0.9,
+              }}
+            />
+          )}
+        </Box>
+        {isColorShift && (
+          <Box>
+            <RadioGroup
+              row
+              defaultValue={0}
+              onChange={(_, v) => setShiftColor(Number(v))}
+            >
+              {getColorRadio(0, '#000', disabled)}
+              {getColorRadio(4, '#d00', disabled)}
+              {getColorRadio(6, '#dd0', disabled)}
+              {getColorRadio(2, '#0d0', disabled)}
+              {getColorRadio(3, '#0dd', disabled)}
+              {getColorRadio(1, '#00d', disabled)}
+              {getColorRadio(5, '#d0d', disabled)}
+              {getColorRadio(7, '#aaa', disabled)}
+            </RadioGroup>
+          </Box>
         )}
         <Box display="flex" alignItems="center">
           {getIconCheckbox(null, disabled, setExistsKey, <KeyIcon />)}
@@ -139,9 +190,9 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
 
       <TextField
         type="text"
-        label="colorcode"
+        label="fill color"
         defaultValue={colorcode}
-        style={{ width: '12em' }}
+        style={{ width: '8em', marginBottom: '8px' }}
         size="small"
         disabled={disabled}
         onChange={(e) => {
@@ -162,9 +213,15 @@ const EncodeForm = ({ onSubmit, disabled, minGridSize }: Props) => {
             isSwap,
             isNega,
             isRotate,
-            hashKey: existsKey ? hashKey : null,
+            hashKey: existsKey && hashKey ? hashKey : undefined,
             clipPos: pos,
             backgroundColor: colorcode,
+            shiftColor: isColorShift
+              ? {
+                  contrast: contrastLevel,
+                  color: shiftColor,
+                }
+              : undefined,
           });
         }}
       >
@@ -198,6 +255,21 @@ const getIconCheckbox = (
       onChange={(_, v) => {
         onChange(v);
       }}
+    />
+  );
+};
+
+const getColorRadio = (value: number, color: string, disabled: boolean) => {
+  return (
+    <Radio
+      value={value}
+      sx={{
+        color: color,
+        '&.Mui-checked': {
+          color: color,
+        },
+      }}
+      disabled={disabled}
     />
   );
 };
