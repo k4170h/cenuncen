@@ -172,18 +172,18 @@ const shufflePixelGrooups = (
   let result = pixelGroups.map((v) => [...v]);
 
   // グループを並べ替え
-  if (options.isSwap) {
+  if (!options.noSwap) {
     result = sortByHash(result as [], hash);
   }
 
   // ハッシュで回転(90度ずつ),反転
-  if (options.isRotate) {
+  if (!options.noRotate) {
     result = rotateGroups(result, hash);
     result = flipGroups(result, hash);
   }
 
   // ハッシュ値で色反転
-  if (options.isNega) {
+  if (!options.noNega) {
     result = negaGroups(result, hash);
   }
 
@@ -243,13 +243,7 @@ const fillArea = (
 ) => {
   const [cv, cx] = createCanvasFromImage(imageData);
 
-  // パディング
-  // 画像の長辺が MIN_RESIZED_IMAGE_WIDTH px までリサイズされたときに MIN_BLOCK_WIDTH px になる大きさ
-  const longStroke =
-    imageData.width < imageData.height ? imageData.height : imageData.width;
-  const padding = Math.ceil(
-    (MIN_PIXEL_GROUP_PADDING * longStroke) / MIN_RESIZED_IMAGE_WIDTH
-  );
+  const padding = getGridPadding(imageData.width, imageData.height);
   const gs = options.gridSize;
 
   // グリッド内のPaddingより内側だけを塗りつぶす
@@ -265,6 +259,21 @@ const fillArea = (
     }
   }
   return cx.getImageData(0, 0, cv.width, cv.height);
+};
+
+/**
+ * 画像を塗りつぶすときの各グリッドの外側のパディング
+ * @param w
+ * @param h
+ * @returns
+ */
+export const getGridPadding = (w: number, h: number) => {
+  // 画像の長辺が MIN_RESIZED_IMAGE_WIDTH px までリサイズされたときに MIN_BLOCK_WIDTH px になる大きさ
+  const longStroke = w < h ? h : w;
+  const padding = Math.ceil(
+    (MIN_PIXEL_GROUP_PADDING * longStroke) / MIN_RESIZED_IMAGE_WIDTH
+  );
+  return padding > MIN_PIXEL_GROUP_PADDING ? padding : MIN_PIXEL_GROUP_PADDING;
 };
 
 /**
@@ -371,8 +380,28 @@ export const decodeImageData = (
         );
       }
     }
+
+    // グリッド境目の劣化を考えず、Paddingを無視して移す場合はこちら
     // cx.putImageData(resizedImageData, v[0] * scale, v[1] * scale);
   });
+
+  if (formOptions && formOptions.crop) {
+    if (isFullsize) {
+      return cx.getImageData(
+        mainArea[0],
+        mainArea[1],
+        mainArea[2],
+        mainArea[3]
+      );
+    } else {
+      return cx.getImageData(
+        mainArea[0] * scaleX,
+        mainArea[1] * scaleY,
+        mainArea[2] * scaleX,
+        mainArea[3] * scaleY
+      );
+    }
+  }
 
   return cx.getImageData(0, 0, cv.width, cv.height);
 };
@@ -404,18 +433,18 @@ const unShufflePixelGroup = (
   }
 
   // ハッシュ値で色反転
-  if (options.isNega) {
+  if (!options.noNega) {
     result = negaGroups(result, hash);
   }
 
   // ハッシュで回転(90度ずつ),反転
-  if (options.isRotate) {
+  if (!options.noRotate) {
     result = flipGroups(result, hash);
     result = rerotateGroups(result, hash);
   }
 
   // グループを並べ替え
-  if (options.isSwap) {
+  if (!options.noSwap) {
     result = resortByHash(result, hash);
   }
 

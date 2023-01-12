@@ -69,9 +69,7 @@ const Viewer = () => {
       if (!imageData) {
         return;
       }
-      const decodedImageData = decodeImageData(imageData, {
-        hashKey: decodeOptions.hashKey,
-      });
+      const decodedImageData = decodeImageData(imageData, decodeOptions);
       setDecodedImageData(decodedImageData);
     },
     [imageData]
@@ -88,7 +86,7 @@ const Viewer = () => {
         )}
         {decodedImageData && (
           <>
-            <DecodeForm onSubmit={reDecode} />
+            <DecodeForm onSubmit={reDecode} disabled={false} />
             <Box height="16px" />
             <SavableCanvas imageData={decodedImageData} title="Result" />
           </>

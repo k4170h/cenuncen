@@ -5,11 +5,11 @@ export type EncodeOptions = {
   // 隠蔽範囲のグリッドサイズ
   gridSize: number;
   // 位置のシャッフル有無
-  isSwap?: boolean;
+  noSwap?: boolean;
   // 回転の有無
-  isRotate?: boolean;
+  noRotate?: boolean;
   // 色の反転有無
-  isNega?: boolean;
+  noNega?: boolean;
   // ハッシュキー
   hashKey?: string;
   // 色をコントラストを下げてシフトする
@@ -17,7 +17,7 @@ export type EncodeOptions = {
     // コントラストの度合。0 < x < 1 で、0に近いほど灰色になる
     contrast: number;
     // 0-7
-    color: number;
+    color: string;
   };
 };
 
@@ -30,8 +30,10 @@ export type EncodeFormValues = EncodeOptions & {
 };
 
 export type DecodeOptions = {
-  // 鍵が必要か
+  // 鍵
   hashKey?: string;
+  // 切り抜くか
+  crop: boolean;
 };
 
 /**

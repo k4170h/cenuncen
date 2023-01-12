@@ -3,14 +3,15 @@ import Decoder from './components/Decoder';
 import Encoder from './components/Encoder';
 
 import { Box } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import React from 'react';
 import Header from './components/Header';
 
 type Mode = 'encode' | 'decode';
 
 const Converter = () => {
-  const [mode, setMode] = useState<Mode>('encode');
+  // 初期表示はdecoderにする。
+  const [mode, setMode] = useState<Mode>('decode');
 
   return (
     <Box>

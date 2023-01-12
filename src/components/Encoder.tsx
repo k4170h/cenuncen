@@ -25,23 +25,7 @@ const Encoder = () => {
     null
   );
   const [selectedAreas, setSelectedAreas] = useState<RectArea[]>([]);
-  const [minGridSize, setMinGridSize] = useState<number>(8);
-
-  useEffect(() => {
-    if (originalImageData == null) {
-      return;
-    }
-
-    const longStroke =
-      originalImageData.width > originalImageData.height
-        ? originalImageData.width
-        : originalImageData.height;
-    const minGridSize = Math.ceil(
-      (MIN_PIXEL_BLOCK_WIDTH * longStroke) / MIN_RESIZED_IMAGE_WIDTH
-    );
-
-    setMinGridSize(minGridSize);
-  }, [originalImageData]);
+  const [gridSize, setGridSize] = useState<number>(0);
 
   // 画像選択時
   const onChangeImage = (imageData: ImageData) => {
@@ -72,6 +56,9 @@ const Encoder = () => {
         throw new Error();
       }
 
+      options.gridSize = gridSize;
+
+      console.log(options);
       // エンコードの実施
       const encodedImageData = encodeImageData(
         originalImageData,
@@ -86,8 +73,12 @@ const Encoder = () => {
         offset: -60,
       });
     },
-    [selectedAreas, originalImageData]
+    [selectedAreas, originalImageData, gridSize]
   );
+
+  const handleChangeGridSize = useCallback((gridSize: number) => {
+    setGridSize(gridSize);
+  }, []);
 
   return (
     <>
@@ -106,6 +97,7 @@ const Encoder = () => {
         <Element name="step2"></Element>
         <SelectableCanvas
           {...{ imageData: originalImageData, onSelectArea, selectedAreas }}
+          onChangeGridSize={handleChangeGridSize}
         />
         <Element name="step3"></Element>
         <Box width={400} p={4}>
@@ -119,7 +111,6 @@ const Encoder = () => {
           <EncodeForm
             onSubmit={encode}
             disabled={originalImageData == null || selectedAreas.length === 0}
-            minGridSize={minGridSize}
           />
         </Box>
         <Element name="step4"></Element>

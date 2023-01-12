@@ -13,86 +13,106 @@ export const lowContrastGroups = (
   groups: PixelGroup[],
   contrastLevel: number
 ) => {
-  return groups.map((group) => {
-    return group.map((pixel) => {
-      return ([0, 1, 2] as const).map((v) => {
-        const col = pixel[v];
-        if (col >= 128) {
-          return 128 + (col - 128) * contrastLevel;
-        } else {
-          return 128 - (128 - col) * contrastLevel;
-        }
-      }) as Pixel;
-    });
+  return groups.map((group) => lowContrastPixels(group, contrastLevel));
+};
+export const lowContrastPixels = (pixels: Pixel[], contrastLevel: number) => {
+  return pixels.map((pixel) => {
+    return ([0, 1, 2] as const).map((v) => {
+      const col = pixel[v];
+      if (col >= 128) {
+        return 128 + (col - 128) * contrastLevel;
+      } else {
+        return 128 - (128 - col) * contrastLevel;
+      }
+    }) as Pixel;
   });
 };
 
 /**
  * PixelGroup の薄くなっていた色味を戻す
  * @param groups
- * @param hash
+ * @param contrastLevel [0-1]
  * @returns
  */
 export const restoreLowContrastGroups = (
   groups: PixelGroup[],
   contrastLevel: number
 ) => {
-  return groups.map((group) => {
-    return group.map((pixel) => {
-      return ([0, 1, 2] as const).map((v) => {
-        const col = pixel[v];
-        if (col >= 128) {
-          return 128 + (1 / contrastLevel) * (col - 128);
-        } else {
-          return 128 - (1 / contrastLevel) * (128 - col);
-        }
-      }) as Pixel;
-    });
+  return groups.map((group) => restoreLowContrastPixels(group, contrastLevel));
+};
+export const restoreLowContrastPixels = (
+  pixels: Pixel[],
+  contrastLevel: number
+) => {
+  return pixels.map((pixel) => {
+    return ([0, 1, 2] as const).map((v) => {
+      const col = pixel[v];
+      if (col >= 128) {
+        return 128 + (1 / contrastLevel) * (col - 128);
+      } else {
+        return 128 - (1 / contrastLevel) * (128 - col);
+      }
+    }) as Pixel;
   });
 };
 
 /**
  *
  * @param groups
- * @param color [0-7].これを2進にする
+ * @param contrastLevel コントラスト
+ * @param color カラーコード。[0-f]{3}
  * @returns
  */
 export const shiftColorGroups = (
   groups: PixelGroup[],
   contrastLevel: number,
-  color: number
+  color: string
 ) => {
-  const colors = ('00' + color.toString(2)).slice(-3).split('');
-  console.log(color, colors, color.toString(2).slice(-3));
-  return groups.map((group) => {
-    return group.map((pixel) => {
-      return ([0, 1, 2] as const).map(
-        (v) =>
-          pixel[v] - (128 - 128 * contrastLevel) * (colors[v] === '1' ? -1 : 1)
-      ) as Pixel;
-    });
+  // 16進を%に
+  return groups.map((group) => shiftColorPixels(group, contrastLevel, color));
+};
+
+export const shiftColorPixels = (
+  pixels: Pixel[],
+  contrastLevel: number,
+  color: string
+) => {
+  // 16進を%に
+  const colorPer = color.split('').map((v) => parseInt(v, 16) / 16);
+  const base = 128 - 128 * contrastLevel;
+  return pixels.map((pixel) => {
+    return ([0, 1, 2] as const).map((v) => {
+      return pixel[v] - base + base * 2 * colorPer[v];
+    }) as Pixel;
   });
 };
 
 /**
  *
  * @param groups
- * @param color [0-7].これを2進にする
+ * @param color
  * @returns
  */
 export const unShiftColorGroups = (
   groups: PixelGroup[],
   contrastLevel: number,
-  color: number
+  color: string
 ) => {
-  const colors = ('00' + color.toString(2)).slice(-3).split('');
-  return groups.map((group) => {
-    return group.map((pixel) => {
-      return ([0, 1, 2] as const).map(
-        (v) =>
-          pixel[v] - (128 - 128 * contrastLevel) * (colors[v] === '1' ? 1 : -1)
-      ) as Pixel;
-    });
+  return groups.map((group) => unShiftColorPixels(group, contrastLevel, color));
+};
+
+export const unShiftColorPixels = (
+  pixels: Pixel[],
+  contrastLevel: number,
+  color: string
+) => {
+  // 16進を%に
+  const colorPer = color.split('').map((v) => parseInt(v, 16) / 16);
+  const base = 128 - 128 * contrastLevel;
+  return pixels.map((pixel) => {
+    return ([0, 1, 2] as const).map(
+      (v) => pixel[v] + base - base * 2 * colorPer[v]
+    ) as Pixel;
   });
 };
 
@@ -226,8 +246,8 @@ export const pixelGroupToImageData = (pixelGroup: PixelGroup, size: number) => {
 /**
  * 引数のPixel配列からImageDataを作る
  * @param pixels
- * @param w
- * @param h
+ * @param w 実際のサイズ
+ * @param h 実際のサイズ
  * @returns
  */
 export const pixelsToImageData = (
@@ -259,6 +279,7 @@ export const groupsToPixels = (
   height: number,
   gridWidth: number
 ): Pixel[] => {
+  console.log('groups len', groups.length);
   const pixels = new Array(width * height);
   for (let i = 0; i < height; i++) {
     for (let j = 0; j < width; j++) {

@@ -1,12 +1,25 @@
 // 画像下にくっつけるカラーバイトコードに関する関数群
-import { createCanvas } from './canvasUtils';
+import { createCanvas, imageDataToPixels } from './canvasUtils';
 import { Buffer } from 'buffer';
 import { decode, encode } from '@msgpack/msgpack';
 import { EncodeOptions, Pixel, RectArea } from './types';
 import {
+  COLOR_BYTE_BLOCK_CONTRAST,
+  COLOR_BYTE_BLOCK_SHIFT_COLOR,
   MIN_COLOR_BYTE_BLOCK_WIDTH,
   MIN_RESIZED_IMAGE_WIDTH,
 } from './definition';
+import {
+  groupsToPixels,
+  lowContrastGroups,
+  lowContrastPixels,
+  pixelsToGroups,
+  pixelsToImageData,
+  restoreLowContrastPixels,
+  shiftColorGroups,
+  shiftColorPixels,
+  unShiftColorPixels,
+} from './pixelGroupUtils';
 
 const R_CHANNEL_PARTITION = 4;
 const G_CHANNEL_PARTITION = 4;
@@ -177,17 +190,37 @@ const drawColorByteCodeBlock = (
     ctx.fillStyle = `rgb(${v[0]},${v[1]},${v[2]})`;
     ctx.fillRect(x, y, blockWidth + 1, blockWidth + 1);
   });
-
   return ctx.getImageData(0, 0, cv.width, cv.height);
+
+  // 色を黒くする
+  // let pixels = imageDataToPixels(ctx.getImageData(0, 0, cv.width, cv.height));
+  // pixels = lowContrastPixels(pixels, COLOR_BYTE_BLOCK_CONTRAST);
+  // pixels = shiftColorPixels(
+  //   pixels,
+  //   COLOR_BYTE_BLOCK_CONTRAST,
+  //   COLOR_BYTE_BLOCK_SHIFT_COLOR
+  // );
+  // return pixelsToImageData(pixels, cv.width, cv.height);
 };
 
 // カラーバイトコードを読む
 const readColorByteCode = (imageData: ImageData) => {
+  // 黒いやつを明るくする
+  // let pixels = imageDataToPixels(imageData);
+  // pixels = unShiftColorPixels(
+  //   pixels,
+  //   COLOR_BYTE_BLOCK_CONTRAST,
+  //   COLOR_BYTE_BLOCK_SHIFT_COLOR
+  // );
+  // pixels = restoreLowContrastPixels(pixels, COLOR_BYTE_BLOCK_CONTRAST);
+  // imageData = pixelsToImageData(pixels, imageData.width, imageData.height);
+
   // 左下と右下から ブロック数/行 を拾う
   const lNum = colorToNum(imageData.getPixelColor(0, imageData.height - 1));
   const rNum = colorToNum(
     imageData.getPixelColor(imageData.width - 1, imageData.height - 1)
   );
+  console.log('read', lNum, rNum);
 
   const blockCountX = lNum * 64 + rNum;
   const blockWidth = imageData.width / blockCountX;
@@ -261,10 +294,15 @@ export const dataToColorByteCode = (
   // 1行あたりのブロック数
   // 画像の長辺が MIN_RESIZED_IMAGE_WIDTH px までリサイズされたときに MIN_BLOCK_WIDTH px になる大きさ
   const longStroke = size[0] < size[1] ? size[1] : size[0];
-  const blockWidth = Math.ceil(
+  let blockWidth = Math.ceil(
     (MIN_COLOR_BYTE_BLOCK_WIDTH * longStroke) / MIN_RESIZED_IMAGE_WIDTH
   );
+  if (blockWidth < MIN_COLOR_BYTE_BLOCK_WIDTH) {
+    blockWidth = MIN_COLOR_BYTE_BLOCK_WIDTH;
+  }
+
   const blockCountX = Math.floor(size[0] / blockWidth);
+  console.log('byte width', blockWidth, longStroke);
 
   // 印字用データ
   const byte64Str_ = objToBase64(data);
@@ -342,12 +380,12 @@ export const fromData = (
       result.encodeOptions.shiftColor = undefined;
     } else if (!cs[0] || cs[0] <= 0 || 1 <= cs[0]) {
       result.encodeOptions.shiftColor = undefined;
-    } else if (cs[1] < 0 || 7 < cs[1]) {
+    } else if (!cs[1].length || cs[1].length !== 3) {
       result.encodeOptions.shiftColor = undefined;
     } else {
       result.encodeOptions.shiftColor = {
         contrast: Number(cs[0]),
-        color: Number(cs[1]),
+        color: cs[1],
       };
     }
   }
@@ -377,10 +415,10 @@ export const toData = ({
     s: size,
     o: {
       // k: encodeOptions.hashKey != null ? 1 : 0,
-      s: encodeOptions.isSwap ? 1 : undefined,
-      n: encodeOptions.isNega ? 1 : undefined,
+      s: encodeOptions.noSwap ? 1 : undefined,
+      n: encodeOptions.noNega ? 1 : undefined,
+      r: encodeOptions.noRotate ? 1 : undefined,
       g: encodeOptions.gridSize,
-      r: encodeOptions.isRotate ? 1 : undefined,
       c: encodeOptions.shiftColor
         ? [encodeOptions.shiftColor.contrast, encodeOptions.shiftColor.color]
         : undefined,
