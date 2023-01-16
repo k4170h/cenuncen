@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { RectArea } from '../utils/types';
+import { RectArea } from '../../utils/types';
 import {
   Table,
   TableBody,
@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { COLOR_PALETTE } from '../utils/definition';
+import { COLOR_PALETTE } from '../../utils/definition';
 
 type Props = {
   selectedAreas: RectArea[];

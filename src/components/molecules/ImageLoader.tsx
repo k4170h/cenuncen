@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import Button from '@mui/material/Button';
-import { createCanvasFromImage } from '../utils/canvasUtils';
+import { createCanvasFromImage } from '../../utils/canvasUtils';
 
 type Props = {
   onImageLoaded: (imageData: ImageData) => void;

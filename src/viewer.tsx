@@ -7,7 +7,7 @@ import { createCanvasFromImage } from './utils/canvasUtils';
 import { decodeImageData } from './utils/convertUtils';
 import SavableCanvas from './components/organisms/SavableCanvas';
 import CloseIcon from '@mui/icons-material/Close';
-import DecodeForm from './components/DecodeForm';
+import DecodeForm from './components/organisms/DecodeForm';
 import { DecodeOptions } from './utils/types';
 import CenteringBox from './components/atoms/CenteringBox';
 

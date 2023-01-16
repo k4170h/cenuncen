@@ -11,7 +11,7 @@ type Mode = 'encode' | 'decode';
 
 const Converter = () => {
   // 初期表示はdecoderにする。
-  const [mode, setMode] = useState<Mode>('encode');
+  const [mode, setMode] = useState<Mode>('decode');
 
   return (
     <Box>
