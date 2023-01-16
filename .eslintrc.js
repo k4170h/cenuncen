@@ -16,7 +16,7 @@ module.exports = {
     sourceType: 'module',
     project: ['./tsconfig.json'],
   },
-  plugins: ['react'],
+  plugins: ['react','react-app'],
   rules: {
     semi: [2, 'always'],
   },

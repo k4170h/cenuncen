@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import ImageLoader from './ImageLoader';
-import SavableCanvas from './SavableCanvas';
-import { DecodeOptions } from '../utils/types';
+import SavableCanvas from '../organisms/SavableCanvas';
+import { DecodeOptions } from '../../utils/types';
 import { Button } from '@mui/material';
-import { createCanvasFromImage } from '../utils/canvasUtils';
+import { createCanvasFromImage } from '../../utils/canvasUtils';
 
 type Props = {
   onImageLoaded: (imageData: ImageData) => void;

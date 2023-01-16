@@ -1,21 +1,17 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import ImageLoader from './ImageLoader';
-import SelectableCanvas from './SelectableCanvas';
-import { EncodeFormValues, RectArea } from '../utils/types';
-import SelectedAreaList from './SelectedAreaList';
-import EncodeForm from './EncodeForm';
+import React, { useCallback, useState } from 'react';
+import ImageLoader from '../molecules/ImageLoader';
+import SelectableCanvas from '../organisms/SelectableCanvas';
+import { EncodeFormValues, RectArea } from '../../utils/types';
+import SelectedAreaList from '../molecules/SelectedAreaList';
+import EncodeForm from '../organisms/EncodeForm';
 import { Box } from '@mui/material';
-import SavableCanvas from './SavableCanvas';
-import { encodeImageData } from '../utils/convertUtils';
-import {
-  MIN_PIXEL_BLOCK_WIDTH,
-  MIN_RESIZED_IMAGE_WIDTH,
-} from '../utils/definition';
-import { ButtonLi, ButtonUl } from './ButtonWrapper';
-import CenteringBox from './CenteringBox';
+import SavableCanvas from '../organisms/SavableCanvas';
+import { encodeImageData } from '../../utils/convertUtils';
+import CenteringBox from '../atoms/CenteringBox';
 import { scroller, Element } from 'react-scroll';
-import Stepper from './Stepper';
-import ImageFromClipboard from './ImageFromClipboard';
+import Stepper from '../molecules/Stepper';
+import ImageFromClipboard from '../molecules/ImageFromClipboard';
+import { Stack } from '@mui/system';
 
 const Encoder = () => {
   const [encodedImageData, setEncodedImageData] = useState<null | ImageData>(
@@ -85,14 +81,10 @@ const Encoder = () => {
       <Stepper />
       <CenteringBox>
         <Element name="step1"></Element>
-        <ButtonUl>
-          <ButtonLi>
-            <ImageLoader onImageLoaded={onChangeImage} />
-          </ButtonLi>
-          <ButtonLi>
-            <ImageFromClipboard onImageLoaded={onChangeImage} />
-          </ButtonLi>
-        </ButtonUl>
+        <Stack direction={'row'} spacing={2}>
+          <ImageLoader onImageLoaded={onChangeImage} />
+          <ImageFromClipboard onImageLoaded={onChangeImage} />
+        </Stack>
         <Box height="16px" />
         <Element name="step2"></Element>
         <SelectableCanvas
@@ -107,7 +99,7 @@ const Encoder = () => {
           />
         </Box>
 
-        <Box width={300} p={4}>
+        <Box width={'auto'} p={4}>
           <EncodeForm
             onSubmit={encode}
             disabled={originalImageData == null || selectedAreas.length === 0}

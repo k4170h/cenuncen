@@ -1,13 +1,13 @@
 import React, { useCallback, useState } from 'react';
-import ImageLoader from './ImageLoader';
-import SavableCanvas from './SavableCanvas';
-import { DecodeOptions } from '../utils/types';
+import ImageLoader from '../molecules/ImageLoader';
+import SavableCanvas from '../organisms/SavableCanvas';
+import { DecodeOptions } from '../../utils/types';
 import { Box, Typography } from '@mui/material';
-import { decodeImageData } from '../utils/convertUtils';
-import DecodeForm from './DecodeForm';
-import { ButtonLi, ButtonUl } from './ButtonWrapper';
-import ImageFromClipboard from './ImageFromClipboard';
-import CenteringBox from './CenteringBox';
+import { decodeImageData } from '../../utils/convertUtils';
+import DecodeForm from '../organisms/DecodeForm';
+import ImageFromClipboard from '../molecules/ImageFromClipboard';
+import CenteringBox from '../atoms/CenteringBox';
+import { Stack } from '@mui/system';
 
 const Decoder = () => {
   const [imageData, setImageData] = useState<ImageData | null>(null);
@@ -18,6 +18,7 @@ const Decoder = () => {
 
   const onImageLoaded = useCallback((imageData: ImageData) => {
     setError('');
+    setDecodedImageData(null);
     try {
       setImageData(imageData);
 
@@ -45,32 +46,29 @@ const Decoder = () => {
   return (
     <>
       <CenteringBox>
-        <ButtonUl>
-          <ButtonLi>
-            <ImageLoader onImageLoaded={onImageLoaded} />
-          </ButtonLi>
-          <ButtonLi>
-            <ImageFromClipboard onImageLoaded={onImageLoaded} />
-          </ButtonLi>
-        </ButtonUl>
-        <Box m={4} width="100%">
-          {error && <Typography color={'#c00'}>{error}</Typography>}
-          {imageData && !decodedImageData && (
-            <>
-              <SavableCanvas imageData={imageData} title="Failed" />
-            </>
-          )}
-          {decodedImageData && (
-            <>
+        <Stack direction={'row'} spacing={2} m={2}>
+          <ImageLoader onImageLoaded={onImageLoaded} />
+          <ImageFromClipboard onImageLoaded={onImageLoaded} />
+        </Stack>
+        {error && <Typography color={'#c00'}>{error}</Typography>}
+        {imageData && !decodedImageData && (
+          <Box width="100%" mb={2}>
+            <SavableCanvas imageData={imageData} title="Failed" />
+          </Box>
+        )}
+        {decodedImageData && (
+          <>
+            <Box width={'auto'}>
               <DecodeForm
                 onSubmit={reDecode}
                 disabled={decodedImageData == null}
               />
-              <Box height="16px" />
+            </Box>
+            <Box width="100%" mb={2}>
               <SavableCanvas imageData={decodedImageData} title="Result" />
-            </>
-          )}
-        </Box>
+            </Box>
+          </>
+        )}
       </CenteringBox>
     </>
   );

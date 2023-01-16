@@ -1,28 +1,16 @@
 import styled from '@emotion/styled';
 import { Box, Button } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { getContext } from '../utils/canvasUtils';
-import { ButtonLi, ButtonUl } from './ButtonWrapper';
+import { getContext } from '../../utils/canvasUtils';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { Stack } from '@mui/system';
+import CenteringBox from '../atoms/CenteringBox';
 
 const CanvasWrapper = styled(Box)({
-  backgroundColor: '#ccc',
-  padding: '8px',
-  boxShadow: 'inset 0 1px 3px 0px rgba(0,0,0,.2)',
   textAlign: 'center',
   overflow: 'auto',
   position: 'relative',
-});
-
-const Title = styled(Box)({
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  backgroundColor: '#fff',
-  padding: '4px',
-  borderRadius: '0 0 10px 0',
-  boxShadow: '0 1px 3px 0px rgba(0,0,0,.2)',
 });
 
 type Props = {
@@ -72,52 +60,45 @@ const SavableCanvas = ({ imageData, title }: Props) => {
   return (
     <>
       {imageData != null && (
-        <>
+        <CenteringBox>
           <CanvasWrapper>
-            <Title>{title}</Title>
             <canvas ref={canvas} width="100" height="0"></canvas>
           </CanvasWrapper>
-          <ButtonUl>
-            <ButtonLi>
-              <Button
-                onClick={() => {
-                  saveToClipboard();
-                }}
-                disabled={imageData == null}
-                variant="contained"
-                size="small"
-              >
-                <ContentCopyIcon />
-              </Button>
-            </ButtonLi>
-            <ButtonLi>
-              <Button
-                component={'a'}
-                variant="contained"
-                size="small"
-                disabled={jpg == null}
-                download="image"
-                href={jpg == null ? '' : jpg}
-              >
-                <SaveAltIcon />
-                JPG
-              </Button>
-            </ButtonLi>
-            <ButtonLi>
-              <Button
-                component={'a'}
-                variant="contained"
-                size="small"
-                disabled={png == null}
-                href={png == null ? '' : png}
-                download="image"
-              >
-                <SaveAltIcon />
-                PNG
-              </Button>
-            </ButtonLi>
-          </ButtonUl>
-        </>
+          <Stack direction="row" spacing={2} m={2}>
+            <Button
+              onClick={() => {
+                saveToClipboard();
+              }}
+              disabled={imageData == null}
+              variant="contained"
+              size="small"
+            >
+              <ContentCopyIcon />
+            </Button>
+            <Button
+              component={'a'}
+              variant="contained"
+              size="small"
+              disabled={jpg == null}
+              download="image"
+              href={jpg == null ? '' : jpg}
+            >
+              <SaveAltIcon />
+              JPG
+            </Button>
+            <Button
+              component={'a'}
+              variant="contained"
+              size="small"
+              disabled={png == null}
+              href={png == null ? '' : png}
+              download="image"
+            >
+              <SaveAltIcon />
+              PNG
+            </Button>
+          </Stack>
+        </CenteringBox>
       )}
     </>
   );

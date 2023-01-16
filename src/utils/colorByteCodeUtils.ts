@@ -1,25 +1,13 @@
 // 画像下にくっつけるカラーバイトコードに関する関数群
-import { createCanvas, imageDataToPixels } from './canvasUtils';
+import { createCanvas } from './canvasUtils';
 import { Buffer } from 'buffer';
 import { decode, encode } from '@msgpack/msgpack';
 import { EncodeOptions, Pixel, RectArea } from './types';
 import {
-  COLOR_BYTE_BLOCK_CONTRAST,
-  COLOR_BYTE_BLOCK_SHIFT_COLOR,
   MIN_COLOR_BYTE_BLOCK_WIDTH,
   MIN_RESIZED_IMAGE_WIDTH,
 } from './definition';
-import {
-  groupsToPixels,
-  lowContrastGroups,
-  lowContrastPixels,
-  pixelsToGroups,
-  pixelsToImageData,
-  restoreLowContrastPixels,
-  shiftColorGroups,
-  shiftColorPixels,
-  unShiftColorPixels,
-} from './pixelGroupUtils';
+import {} from './pixelGroupUtils';
 
 const R_CHANNEL_PARTITION = 4;
 const G_CHANNEL_PARTITION = 4;

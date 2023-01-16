@@ -1,23 +1,22 @@
 import styled from '@emotion/styled';
 import { Box, Button, Slider, Stack } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { RectArea } from '../utils/types';
+import { RectArea } from '../../utils/types';
 import {
   createCanvas,
   createCanvasFromImage,
   getContext,
-} from '../utils/canvasUtils';
-import { getNear, getNearCeil } from '../utils/mathUtils';
-import { ButtonLi, ButtonUl } from './ButtonWrapper';
+} from '../../utils/canvasUtils';
+import { getNear, getNearCeil } from '../../utils/mathUtils';
 import {
   COLOR_PALETTE,
   MIN_PIXEL_BLOCK_WIDTH,
   MIN_RESIZED_IMAGE_WIDTH,
-} from '../utils/definition';
+} from '../../utils/definition';
 import {
   convertRectAreaForGridSize,
   getGridPadding,
-} from '../utils/convertUtils';
+} from '../../utils/convertUtils';
 import Grid3x3OutlinedIcon from '@mui/icons-material/Grid3x3Outlined';
 import Grid4x4OutlinedIcon from '@mui/icons-material/Grid4x4Outlined';
 
@@ -242,19 +241,9 @@ const SelectableCanvas = ({
         //   getNear(y - startPos[1], 8)
         // );
 
-        // 終点が マイナスだった場合の対応
-        const width = getNear(x - startPos[0], 8);
-        const height = getNear(y - startPos[1], 8);
-        const [x1, x2] =
-          width >= 0 ? [startPos[0], width] : [startPos[0] + width, width * -1];
-        const [y1, y2] =
-          height >= 0
-            ? [startPos[1], height]
-            : [startPos[1] + height, height * -1];
-
         // 塗りつぶされる範囲をやってく
         const rectArea = convertRectAreaForGridSize(
-          [x1, y1, x2, y2],
+          getSelectedArea(startPos, [x, y]),
           baseImageData.width,
           baseImageData.height,
           gridSize
@@ -358,34 +347,30 @@ const SelectableCanvas = ({
                     top: Math.abs(endPos[1]),
                   }}
                 >
-                  <ButtonUl>
-                    <ButtonLi>
-                      <Button
-                        onClick={() => {
-                          onSelectArea(getSelectedArea(startPos, endPos));
-                          refleshArea();
-                        }}
-                        disabled={!addable}
-                        variant="contained"
-                        size="small"
-                      >
-                        add
-                      </Button>
-                    </ButtonLi>
-                    <ButtonLi>
-                      <Button
-                        onClick={() => {
-                          refleshCanvas();
-                          refleshArea();
-                        }}
-                        disabled={!addable}
-                        variant="contained"
-                        size="small"
-                      >
-                        cancel
-                      </Button>
-                    </ButtonLi>
-                  </ButtonUl>
+                  <Stack direction="row" spacing={2}>
+                    <Button
+                      onClick={() => {
+                        onSelectArea(getSelectedArea(startPos, endPos));
+                        refleshArea();
+                      }}
+                      disabled={!addable}
+                      variant="contained"
+                      size="small"
+                    >
+                      add
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        refleshCanvas();
+                        refleshArea();
+                      }}
+                      disabled={!addable}
+                      variant="contained"
+                      size="small"
+                    >
+                      cancel
+                    </Button>
+                  </Stack>
                 </ButtonWrapper>
               )}
             </CanvasWrapper>

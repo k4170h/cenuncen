@@ -1,17 +1,17 @@
 import ReactDOM from 'react-dom';
-import Decoder from './components/Decoder';
-import Encoder from './components/Encoder';
+import Decoder from './components/pages/Decoder';
+import Encoder from './components/pages/Encoder';
 
 import { Box } from '@mui/material';
 import { useState } from 'react';
 import React from 'react';
-import Header from './components/Header';
+import Header from './components/molecules/Header';
 
 type Mode = 'encode' | 'decode';
 
 const Converter = () => {
   // 初期表示はdecoderにする。
-  const [mode, setMode] = useState<Mode>('decode');
+  const [mode, setMode] = useState<Mode>('encode');
 
   return (
     <Box>

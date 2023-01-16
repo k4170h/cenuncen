@@ -5,11 +5,11 @@ import React from 'react';
 import queryString from 'query-string';
 import { createCanvasFromImage } from './utils/canvasUtils';
 import { decodeImageData } from './utils/convertUtils';
-import SavableCanvas from './components/SavableCanvas';
+import SavableCanvas from './components/organisms/SavableCanvas';
 import CloseIcon from '@mui/icons-material/Close';
 import DecodeForm from './components/DecodeForm';
 import { DecodeOptions } from './utils/types';
-import CenteringBox from './components/CenteringBox';
+import CenteringBox from './components/atoms/CenteringBox';
 
 const CloseButton = styled(Button)({
   display: 'block',
