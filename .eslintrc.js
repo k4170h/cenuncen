@@ -16,7 +16,7 @@ module.exports = {
     sourceType: 'module',
     project: ['./tsconfig.json'],
   },
-  plugins: ['react','react-app'],
+  plugins: ['@typescript-eslint'],
   rules: {
     semi: [2, 'always'],
   },

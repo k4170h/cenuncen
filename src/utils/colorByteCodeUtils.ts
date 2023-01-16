@@ -208,7 +208,6 @@ const readColorByteCode = (imageData: ImageData) => {
   const rNum = colorToNum(
     imageData.getPixelColor(imageData.width - 1, imageData.height - 1)
   );
-  console.log('read', lNum, rNum);
 
   const blockCountX = lNum * 64 + rNum;
   const blockWidth = imageData.width / blockCountX;
@@ -290,7 +289,6 @@ export const dataToColorByteCode = (
   }
 
   const blockCountX = Math.floor(size[0] / blockWidth);
-  console.log('byte width', blockWidth, longStroke);
 
   // 印字用データ
   const byte64Str_ = objToBase64(data);

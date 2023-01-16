@@ -4,6 +4,7 @@ import {
   FormControlLabel,
   Radio,
   RadioGroup,
+  Tooltip,
 } from '@mui/material';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import { Stack } from '@mui/system';
@@ -18,38 +19,42 @@ type Props<T extends FieldValues> = {
   name: Path<T>;
   label: ReactNode;
   items: Item[];
+  tooltip?: ReactNode;
 };
 
 const ControlledRadio = <T extends FieldValues>({
   control,
   name,
   items,
+  tooltip,
 }: Props<T>) => {
   return (
     <>
-      <FormControl>
-        <Controller
-          name={name}
-          control={control}
-          render={({ field }) => (
-            <>
-              <RadioGroup value={field.value}>
-                <Stack direction="row">
-                  {items.map((radio: Item) => (
-                    <FormControlLabel
-                      {...field}
-                      key={radio.value}
-                      label={radio.label}
-                      value={radio.value}
-                      control={<Radio />}
-                    />
-                  ))}
-                </Stack>
-              </RadioGroup>
-            </>
-          )}
-        ></Controller>
-      </FormControl>
+      <Tooltip title={tooltip ?? ''} placement="top">
+        <FormControl>
+          <Controller
+            name={name}
+            control={control}
+            render={({ field }) => (
+              <>
+                <RadioGroup value={field.value}>
+                  <Stack direction="row">
+                    {items.map((radio: Item) => (
+                      <FormControlLabel
+                        {...field}
+                        key={radio.value}
+                        label={radio.label}
+                        value={radio.value}
+                        control={<Radio />}
+                      />
+                    ))}
+                  </Stack>
+                </RadioGroup>
+              </>
+            )}
+          ></Controller>
+        </FormControl>
+      </Tooltip>
     </>
   );
 };

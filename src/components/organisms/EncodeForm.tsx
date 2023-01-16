@@ -1,4 +1,4 @@
-import { Button, Stack } from '@mui/material';
+import { Button, InputLabel, Stack, Tooltip } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useCallback } from 'react';
 import { ClipPos, EncodeFormValues } from '../../utils/types';
@@ -51,6 +51,7 @@ const EncodeForm = ({ onSubmit, disabled }: Props) => {
   const withKey = watch('withKey');
   const handleSubmit_ = useCallback(
     (e: typeof defaultValues) => {
+      console.log('encode');
       onSubmit({
         gridSize: 0,
         noSwap: !e.doSwap,
@@ -73,14 +74,18 @@ const EncodeForm = ({ onSubmit, disabled }: Props) => {
     <>
       <Stack
         component="form"
-        spacing={2}
-        onSubmit={handleSubmit(handleSubmit_)}
+        spacing={1}
+        onSubmit={handleSubmit(handleSubmit_, () => {
+          console.error('invalid');
+        })}
       >
+        <InputLabel size="small">切り出したブロックへの処理</InputLabel>
         <Stack spacing={4} direction="row">
           <ControlledCheckbox
             control={control}
             name="doSwap"
             label={<ShuffleIcon style={{ verticalAlign: 'middle' }} />}
+            tooltip="シャッフル"
           />
           <ControlledCheckbox
             control={control}
@@ -88,11 +93,13 @@ const EncodeForm = ({ onSubmit, disabled }: Props) => {
             label={
               <Rotate90DegreesCwIcon style={{ verticalAlign: 'middle' }} />
             }
+            tooltip="回転・反転"
           />
           <ControlledCheckbox
             control={control}
             name="doNega"
             label={<InvertColorsIcon style={{ verticalAlign: 'middle' }} />}
+            tooltip="色反転"
           />
         </Stack>
         <Stack direction="row">
@@ -100,6 +107,7 @@ const EncodeForm = ({ onSubmit, disabled }: Props) => {
             control={control}
             name="doColorShift"
             label={<OpacityIcon style={{ verticalAlign: 'middle' }} />}
+            tooltip="コントラストを下げて、任意の色味に寄せる(劣化あり)"
           />
           {doShiftColor && (
             <Box>
@@ -116,6 +124,7 @@ const EncodeForm = ({ onSubmit, disabled }: Props) => {
                   max: 0.9,
                 }}
                 width="8.5em"
+                tooltip="0に近いほどコントラストが下がる。"
               />
               <ControlledTextarea
                 control={control}
@@ -125,6 +134,8 @@ const EncodeForm = ({ onSubmit, disabled }: Props) => {
                 prefix="#"
                 width="5em"
                 pattern={/^([A-Fa-f0-9]{3})$/}
+                tooltip="寄せる色味"
+                required={true}
               />
             </Box>
           )}
@@ -134,6 +145,7 @@ const EncodeForm = ({ onSubmit, disabled }: Props) => {
             control={control}
             name="withKey"
             label={<KeyIcon style={{ verticalAlign: 'middle' }} />}
+            tooltip="合言葉を設定"
           />
           {withKey && (
             <Box>
@@ -143,6 +155,7 @@ const EncodeForm = ({ onSubmit, disabled }: Props) => {
                 label="key"
                 type="text"
                 width="5em"
+                tooltip="合言葉"
               />
             </Box>
           )}
@@ -155,12 +168,15 @@ const EncodeForm = ({ onSubmit, disabled }: Props) => {
           prefix="#"
           width="5em"
           pattern={/^([A-Fa-f0-9]{3})$/}
+          required={true}
+          tooltip="空白の色"
         />
         <ControlledRadio
           control={control}
           name="pos"
           label=""
           items={radioItems}
+          tooltip="ブロック配置場所"
         />
         <Button type="submit" variant="contained" disabled={disabled}>
           Censoring
