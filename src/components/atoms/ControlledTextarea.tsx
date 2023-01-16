@@ -5,6 +5,7 @@ import {
   InputBaseComponentProps,
   TextField,
   TextFieldProps,
+  Tooltip,
 } from '@mui/material';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 
@@ -18,6 +19,8 @@ type Props<T extends FieldValues> = {
   inputProps?: InputBaseComponentProps;
   width?: string;
   pattern?: RegExp;
+  tooltip?: ReactNode;
+  required?: boolean;
 } & TextFieldProps;
 
 const ControlledTextarea = <T extends FieldValues>({
@@ -30,29 +33,30 @@ const ControlledTextarea = <T extends FieldValues>({
   inputProps,
   width,
   pattern,
+  tooltip,
+  required,
 }: Props<T>) => {
   return (
     <>
-      <FormControl>
-        <Controller
-          control={control}
-          name={name}
-          rules={{
-            required: true,
-            pattern: pattern && {
-              value: pattern,
-              message: 'invalid Pattern ',
-            },
-          }}
-          render={({ field, fieldState: { error, invalid } }) => {
-            console.log(error?.message, invalid);
-            return (
+      <Tooltip title={tooltip ?? ''} placement="top">
+        <FormControl>
+          <Controller
+            control={control}
+            name={name}
+            rules={{
+              required: required ? 'required' : false,
+              pattern: pattern && {
+                value: pattern,
+                message: 'invalid Pattern ',
+              },
+            }}
+            render={({ field, fieldState: { error, invalid } }) => (
               <TextField
                 type={type}
                 size="small"
                 {...field}
                 label={label}
-                error={!!error?.message}
+                error={invalid}
                 helperText={error?.message}
                 style={{ width: width }}
                 InputProps={{
@@ -65,10 +69,10 @@ const ControlledTextarea = <T extends FieldValues>({
                 }}
                 inputProps={inputProps}
               />
-            );
-          }}
-        />
-      </FormControl>
+            )}
+          />
+        </FormControl>
+      </Tooltip>
     </>
   );
 };

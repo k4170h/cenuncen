@@ -279,7 +279,6 @@ export const groupsToPixels = (
   height: number,
   gridWidth: number
 ): Pixel[] => {
-  console.log('groups len', groups.length);
   const pixels = new Array(width * height);
   for (let i = 0; i < height; i++) {
     for (let j = 0; j < width; j++) {
