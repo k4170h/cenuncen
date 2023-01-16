@@ -31,7 +31,7 @@ const defaultValues = {
   shiftColor: '000',
   withKey: false,
   key: '',
-  pos: 'left' as ClipPos,
+  pos: 'bottom' as ClipPos,
   fillColor: '000',
 };
 
