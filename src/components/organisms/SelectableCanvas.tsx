@@ -41,11 +41,7 @@ const SelectableCanvas = ({
   const canvas = useRef<HTMLCanvasElement>(null);
   const [baseImageData, setBaseImageData] = useState<ImageData | null>(null);
   const [mouseMoved, setMouseMoved] = useState(false);
-
   const { zoom } = useContext(PanningInfo);
-
-  // const { selectedAreas } = useContext(AppState);
-  // const { setSelectedAreas } = useContext(AppStateFunc);
 
   // 下地になるImageDataを作成する
   useEffect(() => {
