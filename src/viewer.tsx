@@ -53,9 +53,9 @@ const Viewer = () => {
     const [cv, cx] = createCanvasFromImage(image);
     setImageData(cx.getImageData(0, 0, cv.width, cv.height));
     try {
-      const decodedImageData = decodeImageData(
-        cx.getImageData(0, 0, cv.width, cv.height)
-      );
+      // const decodedImageData = decodeImageData(
+      //   cx.getImageData(0, 0, cv.width, cv.height)
+      // );
       setDecodedImageData(decodedImageData);
     } catch (e) {
       setError('デコード失敗[' + e + ']');
@@ -69,7 +69,7 @@ const Viewer = () => {
       if (!imageData) {
         return;
       }
-      const decodedImageData = decodeImageData(imageData, decodeOptions);
+      // const decodedImageData = decodeImageData(imageData, decodeOptions);
       setDecodedImageData(decodedImageData);
     },
     [imageData]
@@ -86,7 +86,7 @@ const Viewer = () => {
         )}
         {decodedImageData && (
           <>
-            <DecodeForm onSubmit={reDecode} disabled={false} />
+            {/* <DecodeForm onChange={reDecode} disabled={false} /> */}
             <Box height="16px" />
             <SavableCanvas imageData={decodedImageData} title="Result" />
           </>

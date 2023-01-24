@@ -57,10 +57,10 @@ export const restoreLowContrastPixels = (
 };
 
 /**
- *
+ * 色味がなくなった分、任意の色に寄せる
  * @param groups
  * @param contrastLevel コントラスト
- * @param color カラーコード。[0-f]{3}
+ * @param color カラーコード。[0-f]{6}
  * @returns
  */
 export const shiftColorGroups = (
@@ -69,7 +69,28 @@ export const shiftColorGroups = (
   color: string
 ) => {
   // 16進を%に
-  return groups.map((group) => shiftColorPixels(group, contrastLevel, color));
+  return groups.map((group) =>
+    shiftColorPixels(group, contrastLevel, colorCode3To6(color))
+  );
+};
+
+/**
+ * [0-f]{6}のカラーコードを[0-f]{3}にする
+ */
+export const colorCode3To6 = (colorcode: string): string => {
+  return (
+    colorcode
+      .match(/.{2}/g)
+      ?.map((v) => {
+        const d = parseInt(v, 16);
+        let chr = Math.floor(d / 17);
+        if (d % 17 > 8) {
+          chr = chr + 1;
+        }
+        return chr.toString(16);
+      })
+      .join('') ?? ''
+  );
 };
 
 export const shiftColorPixels = (

@@ -1,15 +1,13 @@
-import React, { useCallback, useState } from 'react';
-import ImageLoader from './ImageLoader';
-import SavableCanvas from '../organisms/SavableCanvas';
-import { DecodeOptions } from '../../utils/types';
+import React, { ReactNode, useCallback, useState } from 'react';
 import { Button } from '@mui/material';
 import { createCanvasFromImage } from '../../utils/canvasUtils';
 
 type Props = {
   onImageLoaded: (imageData: ImageData) => void;
+  children?: ReactNode;
 };
 
-const ImageFromClipboard = ({ onImageLoaded }: Props) => {
+const ClipboardImageLoader = ({ onImageLoaded, children }: Props) => {
   // クリップボードから画像を開く
   const loadFromClipboard = useCallback(() => {
     const clipboard = navigator.clipboard.read();
@@ -29,17 +27,17 @@ const ImageFromClipboard = ({ onImageLoaded }: Props) => {
           };
         });
       } catch (e) {
-        alert('デコード失敗:' + e);
-        console.error('failed decode from clipboard.' + e);
+        alert('load image Failed:' + e);
+        console.error(e);
       }
     });
-  }, []);
+  }, [onImageLoaded]);
 
   return (
     <Button variant="contained" onClick={loadFromClipboard}>
-      FROM CLIPBOARD
+      {children ?? 'READ CLIPBOARD'}
     </Button>
   );
 };
 
-export default ImageFromClipboard;
+export default ClipboardImageLoader;

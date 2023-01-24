@@ -35,6 +35,7 @@ const ControlledTextarea = <T extends FieldValues>({
   pattern,
   tooltip,
   required,
+  disabled,
 }: Props<T>) => {
   return (
     <>
@@ -67,6 +68,7 @@ const ControlledTextarea = <T extends FieldValues>({
                     <InputAdornment position="end">{suffix}</InputAdornment>
                   ) : undefined,
                 }}
+                disabled={disabled}
                 inputProps={inputProps}
               />
             )}

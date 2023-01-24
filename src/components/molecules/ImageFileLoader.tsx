@@ -1,12 +1,13 @@
-import React, { useCallback, useRef } from 'react';
+import React, { ReactNode, useCallback, useRef } from 'react';
 import Button from '@mui/material/Button';
 import { createCanvasFromImage } from '../../utils/canvasUtils';
 
 type Props = {
   onImageLoaded: (imageData: ImageData) => void;
+  children?: ReactNode;
 };
 
-const ImageLoader = ({ onImageLoaded }: Props) => {
+const ImageFileLoader = ({ onImageLoaded, children }: Props) => {
   const input = useRef<HTMLInputElement>(null);
 
   // 画像選択時
@@ -38,7 +39,7 @@ const ImageLoader = ({ onImageLoaded }: Props) => {
   return (
     <>
       <Button variant="contained" onClick={handleClick}>
-        local file
+        {children ?? 'select local file'}
       </Button>
       <input
         type="file"
@@ -51,4 +52,4 @@ const ImageLoader = ({ onImageLoaded }: Props) => {
   );
 };
 
-export default ImageLoader;
+export default ImageFileLoader;

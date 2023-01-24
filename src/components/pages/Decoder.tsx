@@ -1,11 +1,11 @@
 import React, { useCallback, useState } from 'react';
-import ImageLoader from '../molecules/ImageLoader';
+import ImageLoader from '../molecules/ImageFileLoader';
 import SavableCanvas from '../organisms/SavableCanvas';
 import { DecodeOptions } from '../../utils/types';
 import { Box, Typography } from '@mui/material';
 import { decodeImageData } from '../../utils/convertUtils';
 import DecodeForm from '../organisms/DecodeForm';
-import ImageFromClipboard from '../molecules/ImageFromClipboard';
+import ImageFromClipboard from '../molecules/ClipboardImageLoader';
 import CenteringBox from '../atoms/CenteringBox';
 import { Stack } from '@mui/system';
 
@@ -22,7 +22,7 @@ const Decoder = () => {
     try {
       setImageData(imageData);
 
-      const decodedImageData = decodeImageData(imageData);
+      // const decodedImageData = decodeImageData(imageData);
 
       setDecodedImageData(decodedImageData);
     } catch (e) {
@@ -37,7 +37,7 @@ const Decoder = () => {
       if (!imageData) {
         return;
       }
-      const decodedImageData = decodeImageData(imageData, decodeOptions);
+      // const decodedImageData = decodeImageData(imageData, decodeOptions);
       setDecodedImageData(decodedImageData);
     },
     [imageData]
@@ -59,10 +59,10 @@ const Decoder = () => {
         {decodedImageData && (
           <>
             <Box width={'auto'}>
-              <DecodeForm
-                onSubmit={reDecode}
+              {/* <DecodeForm
+                // onChange={reDecode}
                 disabled={decodedImageData == null}
-              />
+              /> */}
             </Box>
             <Box width="100%" mb={2}>
               <SavableCanvas imageData={decodedImageData} title="Result" />
