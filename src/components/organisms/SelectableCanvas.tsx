@@ -31,7 +31,7 @@ type Props = {
 
 const SelectableCanvas = ({
   imageData,
-  options: { gridSize, spacing },
+  options: { gridSize, spacing, withColor },
   selectedAreas,
   onSelectArea,
 }: Props) => {
@@ -63,10 +63,10 @@ const SelectableCanvas = ({
     const [cv, ctx] = createCanvasFromImage(imageData);
 
     const padding = spacing; //getGridPadding(imageData.width, imageData.height);
-    ctx.fillStyle = '#000';
     selectedAreas.forEach((v, i) => {
-      ctx.strokeStyle = COLOR_PALETTE[i % COLOR_PALETTE.length];
-      // ctx.strokeRect(...v);
+      ctx.fillStyle = withColor
+        ? COLOR_PALETTE[i % COLOR_PALETTE.length]
+        : '#000';
 
       // グリッド内のPaddingより内側だけを塗りつぶす
       for (let i = 0; i < v[3]; i += gridSize) {
@@ -85,27 +85,12 @@ const SelectableCanvas = ({
           ] as const;
 
           ctx.lineWidth = 1;
-          ctx.strokeRect(...rect);
           ctx.fillRect(...rect);
-
-          ctx.lineWidth = 2;
-          strokeLine(ctx, [
-            rect[0],
-            rect[1],
-            rect[0] + rect[2],
-            rect[1] + rect[3],
-          ]);
-          strokeLine(ctx, [
-            rect[0] + rect[2],
-            rect[1],
-            rect[0],
-            rect[1] + rect[3],
-          ]);
         }
       }
     });
     setBaseImageData(ctx.getImageData(0, 0, cv.width, cv.height));
-  }, [imageData, selectedAreas, gridSize, spacing]);
+  }, [imageData, selectedAreas, gridSize, spacing, withColor]);
 
   // baseImageDataに変更があればCanvasに反映
   useEffect(() => {
