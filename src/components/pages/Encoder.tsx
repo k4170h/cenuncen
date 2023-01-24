@@ -170,8 +170,8 @@ const Encoder = () => {
         decode({ imageDataToDecode: resizedImageData });
         setImageDataToDecode(resizedImageData);
       }
-      setTryDecoded(true);
       setPage('decode');
+      setTryDecoded(true);
     },
     [decode, encodedImageData, setImageDataToDecode]
   );
