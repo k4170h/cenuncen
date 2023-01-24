@@ -30,7 +30,7 @@ const EncodeForm = ({ onChange, encodeOptions }: Props) => {
   const watchForm = watch();
   const doShiftColor = watch('doColorShift');
   const withKey = watch('withKey');
-  const lastValue = useRef('');
+  const lastValue = useRef(JSON.stringify(encodeOptions));
 
   useEffect(() => {
     const watchFormStr = JSON.stringify(watchForm);
