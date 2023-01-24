@@ -23,7 +23,7 @@ type Props = {
 };
 
 const EncodeForm = ({ onChange, encodeOptions }: Props) => {
-  const { control, watch } = useForm<typeof DEFAULT_ENCODE_OPTIONS>({
+  const { control, watch, setValue } = useForm<typeof DEFAULT_ENCODE_OPTIONS>({
     defaultValues: encodeOptions,
     mode: 'onChange',
   });
@@ -39,6 +39,17 @@ const EncodeForm = ({ onChange, encodeOptions }: Props) => {
       onChange && onChange(watchForm);
     }
   }, [watchForm, onChange]);
+
+  useEffect(() => {
+    if (
+      !watchForm.doNega &&
+      !watchForm.doRotate &&
+      !watchForm.doSwap &&
+      watchForm.withKey
+    ) {
+      setValue('withKey', false);
+    }
+  }, [watchForm, setValue]);
 
   return (
     <>
@@ -102,6 +113,11 @@ const EncodeForm = ({ onChange, encodeOptions }: Props) => {
                   control={control}
                   name="withKey"
                   label={<>Key</>}
+                  disabled={
+                    !watchForm.doNega &&
+                    !watchForm.doRotate &&
+                    !watchForm.doSwap
+                  }
                 />
               </FlatAccordionSummary>
               <FlatAccordionDetails>
