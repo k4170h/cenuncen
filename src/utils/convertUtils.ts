@@ -8,6 +8,9 @@ import {
 } from './canvasUtils';
 import { colorByteCodeToData, dataToColorByteCode } from './colorByteCodeUtils';
 import {
+  DEFAULT_AREA_SELECT_OPTION,
+  DEFAULT_DECODE_OPTIONS,
+  DEFAULT_ENCODE_OPTIONS,
   DEFAULT_KEY,
   MIN_PIXEL_GROUP_PADDING,
   MIN_RESIZED_IMAGE_WIDTH,
@@ -27,13 +30,7 @@ import {
   shiftColorGroups,
   unShiftColorGroups,
 } from './pixelGroupUtils';
-import {
-  DecodeOptions,
-  EncodeFormValues,
-  EncodeOptions,
-  PixelGroup,
-  RectArea,
-} from './types';
+import { EncodeOptions, PixelGroup, RectArea } from './types';
 
 /**
  * imageDataの areas に option のシャッフルを適用し、その情報を下部に印字したものを返却する
@@ -45,9 +42,12 @@ import {
 export const encodeImageData = (
   imageData: ImageData,
   areas: RectArea[],
-  options: EncodeFormValues
+  encodeOptions: typeof DEFAULT_ENCODE_OPTIONS,
+  areaSelectOptions: typeof DEFAULT_AREA_SELECT_OPTION
 ) => {
-  const gs = options.gridSize;
+  const options = { ...formToEncodeOption(encodeOptions) };
+
+  const gs = areaSelectOptions.gridSize;
 
   // 対象範囲をgirdSizeで割り切れるサイズに補正
   const resizedAreas = areas.map((v) =>
@@ -58,15 +58,18 @@ export const encodeImageData = (
 
   // 対象範囲を切り出し、それを裁断
   const clippedPixelGroups = resizedAreas.reduce((p, c) => {
-    return [...p, ...clipImageData(ctx.getImageData(...c), options.gridSize)];
+    return [...p, ...clipImageData(ctx.getImageData(...c), gs)];
   }, [] as PixelGroup[]);
 
   // それをシャッフル
-  const shuffledPixelGrooups = shufflePixelGrooups(clippedPixelGroups, options);
+  const shuffledPixelGrooups = shufflePixelGrooups(clippedPixelGroups, {
+    ...options,
+    gridSize: gs,
+  });
 
   // それをImageDataの配列に
   const shuffledImageDatas = shuffledPixelGrooups.map((v) =>
-    pixelGroupToImageData(v, options.gridSize)
+    pixelGroupToImageData(v, gs)
   );
 
   // そのデータを並べたImageData作る
@@ -94,7 +97,7 @@ export const encodeImageData = (
 
   // 該当エリアを塗りつぶす
   const filledImageData = resizedAreas.reduce((p, c) => {
-    return fillArea(p, c, options, '#' + options.backgroundColor);
+    return fillArea(p, c, areaSelectOptions, '#' + options.backgroundColor);
   }, imageData);
 
   // 隠蔽対象のエリア一覧(x,y,xグリッド数,yグリッド数)
@@ -116,7 +119,7 @@ export const encodeImageData = (
   const clippedPosX = options.clipPos === 'right' ? imageData.width : 0;
   const clippedPosY = options.clipPos === 'bottom' ? imageData.height : 0;
   const colorByteCodeImageData = dataToColorByteCode(
-    options,
+    { ...options, gridSize: gs },
     gridAreas,
     [clippedPosX, clippedPosY, clippedCv.width / gs, clippedCv.height / gs],
     [mainPosX, mainPosY, imageData.width, imageData.height],
@@ -238,23 +241,22 @@ export const convertRectAreaForGridSize = (
 const fillArea = (
   imageData: ImageData,
   area: RectArea,
-  options: EncodeOptions,
+  options: typeof DEFAULT_AREA_SELECT_OPTION,
   colorCode: string
 ) => {
   const [cv, cx] = createCanvasFromImage(imageData);
 
-  const padding = getGridPadding(imageData.width, imageData.height);
-  const gs = options.gridSize;
+  // const gs = options.gridSize;
 
   // グリッド内のPaddingより内側だけを塗りつぶす
   cx.fillStyle = colorCode;
-  for (let i = 0; i < area[3]; i += gs) {
-    for (let j = 0; j < area[2]; j += gs) {
+  for (let i = 0; i < area[3]; i += options.gridSize) {
+    for (let j = 0; j < area[2]; j += options.gridSize) {
       cx.fillRect(
-        area[0] + j + padding,
-        area[1] + i + padding,
-        gs - padding * 2,
-        gs - padding * 2
+        area[0] + j + options.spacing,
+        area[1] + i + options.spacing,
+        options.gridSize - options.spacing * 2,
+        options.gridSize - options.spacing * 2
       );
     }
   }
@@ -268,7 +270,7 @@ const fillArea = (
  * @returns
  */
 export const getGridPadding = (w: number, h: number) => {
-  // 画像の長辺が MIN_RESIZED_IMAGE_WIDTH px までリサイズされたときに MIN_BLOCK_WIDTH px になる大きさ
+  // 画像の長辺が MIN_RESIZED_IMAGE_WIDTH px までリサイズされたときに MIN_PIXEL_GROUP_PADDING px になる大きさ
   const longStroke = w < h ? h : w;
   const padding = Math.ceil(
     (MIN_PIXEL_GROUP_PADDING * longStroke) / MIN_RESIZED_IMAGE_WIDTH
@@ -284,8 +286,10 @@ export const getGridPadding = (w: number, h: number) => {
  */
 export const decodeImageData = (
   imageData: ImageData,
-  formOptions?: DecodeOptions
+  decodeOptions: typeof DEFAULT_DECODE_OPTIONS
 ) => {
+  const formOptions = formToDecodeOption(decodeOptions);
+
   const [cv, cx] = createCanvasFromImage(imageData);
 
   // 画像のカラーバイトコードを読む
@@ -346,6 +350,7 @@ export const decodeImageData = (
     options
   );
 
+  const p = Number(decodeOptions.padding);
   filledAreas.forEach((v) => {
     const len = v[2] * v[3];
     // 対象のPixelGroupを切り出し
@@ -365,18 +370,31 @@ export const decodeImageData = (
     const [, rcx] = createCanvasFromImage(resizedImageData);
     const sgsX = options.gridSize * scaleX;
     const sgsY = options.gridSize * scaleY;
-    const p = 1;
     for (let i = 0; i < v[3]; i++) {
       for (let j = 0; j < v[2]; j++) {
         cx.putImageData(
           rcx.getImageData(
-            Math.round(j * sgsX + p * 1),
-            Math.round(i * sgsY + p * 1),
-            Math.round(sgsX - p * 2),
-            Math.round(sgsY - p * 2)
+            // Math.round(j * sgsX + p * 1),
+            // Math.round(i * sgsY + p * 1),
+            // Math.round(sgsX - p * 2),
+            // Math.round(sgsY - p * 2)
+            j * sgsX + p,
+            i * sgsY + p,
+            sgsX - p * 2,
+            sgsY - p * 2
           ),
-          Math.round(v[0] * scaleX + j * sgsX + p * 1 + mainArea[0] * scaleX),
-          Math.round(v[1] * scaleY + i * sgsY + p * 1 + mainArea[1] * scaleY)
+          // Math.round(v[0] * scaleX + j * sgsX + p * 1 + mainArea[0] * scaleX),
+          // Math.round(v[1] * scaleY + i * sgsY + p * 1 + mainArea[1] * scaleY)
+          v[0] * scaleX +
+            j * sgsX +
+            p +
+            mainArea[0] * scaleX +
+            decodeOptions.offsetX,
+          v[1] * scaleY +
+            i * sgsY +
+            p +
+            mainArea[1] * scaleY +
+            decodeOptions.offsetY
         );
       }
     }
@@ -450,3 +468,23 @@ const unShufflePixelGroup = (
 
   return result;
 };
+
+const formToEncodeOption = (e: typeof DEFAULT_ENCODE_OPTIONS) => ({
+  noSwap: !e.doSwap,
+  noNega: !e.doNega,
+  noRotate: !e.doRotate,
+  hashKey: e.withKey && e.key ? e.key : undefined,
+  clipPos: e.pos,
+  backgroundColor: e.fillColor,
+  shiftColor: e.doColorShift
+    ? {
+        contrast: e.contrastLevel,
+        color: e.shiftColor,
+      }
+    : undefined,
+});
+
+const formToDecodeOption = (e: typeof DEFAULT_DECODE_OPTIONS) => ({
+  crop: e.doCrop,
+  hashKey: e.key,
+});

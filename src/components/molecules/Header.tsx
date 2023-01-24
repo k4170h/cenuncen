@@ -1,19 +1,23 @@
 import { Box, Tab, Tabs } from '@mui/material';
 import React from 'react';
+import { Page } from '../../utils/types';
 
-type Props = {
-  onChange: (v: 'encode' | 'decode') => void;
-  mode: 'encode' | 'decode';
+type Item<T> = {
+  label: string;
+  value: T;
 };
 
-const Header = ({ onChange, mode }: Props) => {
+type Props<T> = {
+  onChange: (v: T) => void;
+  items: Item<T>[];
+  current: T;
+};
+
+const Header = <T,>({ onChange, items, current }: Props<T>) => {
   return (
     <>
-      <Box height={48} m={1}>
-        {' '}
-      </Box>
       <Tabs
-        value={mode}
+        value={current}
         onChange={(e, v) => onChange(v)}
         style={{
           marginBottom: 4,
@@ -22,13 +26,14 @@ const Header = ({ onChange, mode }: Props) => {
           top: 0,
           left: 0,
           backgroundColor: '#fff',
-          width: '100%',
           boxShadow: '0 1px 3px 0px rgba(0,0,0,.2)',
           zIndex: 1000,
+          borderRadius: '0 0 8px 0',
         }}
       >
-        <Tab label="Encode" value="encode" />
-        <Tab label="Decode" value="decode" />
+        {items?.map((v) => (
+          <Tab {...v} key={v.value + ''} />
+        ))}
       </Tabs>
     </>
   );

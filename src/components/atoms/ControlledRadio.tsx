@@ -38,7 +38,7 @@ const ControlledRadio = <T extends FieldValues>({
             render={({ field }) => (
               <>
                 <RadioGroup value={field.value}>
-                  <Stack direction="row">
+                  <Stack direction="row" flexWrap={'wrap'} spacing={2}>
                     {items.map((radio: Item) => (
                       <FormControlLabel
                         {...field}

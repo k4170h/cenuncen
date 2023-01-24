@@ -7,7 +7,7 @@ import {
   MIN_COLOR_BYTE_BLOCK_WIDTH,
   MIN_RESIZED_IMAGE_WIDTH,
 } from './definition';
-import {} from './pixelGroupUtils';
+import { colorCode3To6 } from './pixelGroupUtils';
 
 const R_CHANNEL_PARTITION = 4;
 const G_CHANNEL_PARTITION = 4;
@@ -335,9 +335,9 @@ export const fromData = (
   const result = {
     encodeOptions: {
       gridSize: data.o.g,
-      isSwap: data.o.s,
-      isRotate: data.o.r,
-      isNega: data.o.n,
+      noSwap: data.o.s,
+      noRotate: data.o.r,
+      noNega: data.o.n,
       // hashKey: data.o.k ? DEFAULT_KEY : undefined,
       shiftColor: data.o.c,
     },
@@ -406,7 +406,10 @@ export const toData = ({
       r: encodeOptions.noRotate ? 1 : undefined,
       g: encodeOptions.gridSize,
       c: encodeOptions.shiftColor
-        ? [encodeOptions.shiftColor.contrast, encodeOptions.shiftColor.color]
+        ? [
+            encodeOptions.shiftColor.contrast,
+            colorCode3To6(encodeOptions.shiftColor.color),
+          ]
         : undefined,
     },
     c: filledAreas,

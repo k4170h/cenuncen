@@ -1,59 +1,94 @@
-import { Button, Stack } from '@mui/material';
-import React, { useCallback } from 'react';
-import { DecodeOptions } from '../../utils/types';
-import CropIcon from '@mui/icons-material/Crop';
-import ControlledCheckbox from '../atoms/ControlledCheckbox';
+import { Stack } from '@mui/material';
+import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import ControlledTextarea from '../atoms/ControlledTextarea';
+import { DEFAULT_DECODE_OPTIONS } from '../../utils/definition';
+import ControlledSwitch from '../atoms/ControlledSwitch';
+import ControlledSlider from '../atoms/ControlledSlider';
+import { FormLi, FormUl } from '../atoms/FormList';
 
 type Props = {
-  disabled: boolean;
-  onSubmit: (options: DecodeOptions) => void;
+  onChange?: (v: typeof DEFAULT_DECODE_OPTIONS) => void;
+  decodeOptions?: typeof DEFAULT_DECODE_OPTIONS;
+  disabled?: boolean;
 };
 
-const defaultValues = {
-  doCrop: false,
-  key: '',
-};
-
-const DecodeForm = ({ onSubmit }: Props) => {
-  const { control, handleSubmit } = useForm<typeof defaultValues>({
-    defaultValues,
+const DecodeForm = ({ onChange, decodeOptions, disabled }: Props) => {
+  const { control, watch } = useForm<typeof DEFAULT_DECODE_OPTIONS>({
+    defaultValues: decodeOptions,
+    mode: 'onChange',
   });
-  const handleSubmit_ = useCallback(
-    (e: typeof defaultValues) => {
-      onSubmit({
-        hashKey: e.key,
-        crop: e.doCrop,
-      });
-    },
-    [onSubmit]
-  );
+  const watchForm = watch();
+  const lastFormValue = useRef(JSON.stringify(DEFAULT_DECODE_OPTIONS));
+
+  useEffect(() => {
+    const watchFormStr = JSON.stringify(watchForm);
+    if (lastFormValue.current !== watchFormStr) {
+      lastFormValue.current = watchFormStr;
+      onChange && onChange(watchForm);
+    }
+  }, [onChange, watchForm]);
 
   return (
-    <Stack
-      spacing={2}
-      direction="row"
-      component="form"
-      onSubmit={handleSubmit(handleSubmit_)}
-      m={2}
-    >
-      <ControlledCheckbox
-        control={control}
-        name="doCrop"
-        label={<CropIcon style={{ verticalAlign: 'middle' }} />}
-      />
-      <ControlledTextarea
-        control={control}
-        name="key"
-        label="key"
-        type="text"
-        width="5em"
-      />
-      <Button type="submit" variant="contained">
-        retry
-      </Button>
-    </Stack>
+    <FormUl>
+      <FormLi>
+        <ControlledSwitch
+          control={control}
+          name="doCrop"
+          label={<>clip</>}
+          disabled={disabled}
+        />
+      </FormLi>
+      <FormLi>
+        {/* <ControlledTextarea
+          control={control}
+          name="padding"
+          label={<>padding</>}
+          disabled={disabled}
+          type="number"
+        /> */}
+        <Stack>
+          <ControlledSlider
+            control={control}
+            name="padding"
+            min={0}
+            max={6}
+            step={1}
+            disabled={disabled}
+            label="Padding"
+          />
+          <ControlledSlider
+            control={control}
+            name="offsetX"
+            min={-3}
+            max={3}
+            step={1}
+            disabled={disabled}
+            label="Offset"
+            left="X"
+          />
+          <ControlledSlider
+            control={control}
+            name="offsetY"
+            min={-3}
+            max={3}
+            step={1}
+            disabled={disabled}
+            left="Y"
+          />
+        </Stack>
+      </FormLi>
+      <FormLi>
+        <ControlledTextarea
+          control={control}
+          name="key"
+          label="key"
+          type="text"
+          width="5em"
+          disabled={disabled}
+        />
+      </FormLi>
+    </FormUl>
   );
 };
 

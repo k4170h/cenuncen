@@ -1,3 +1,5 @@
+import { ClipPos } from './types';
+
 /** デフォルトHashキー */
 export const DEFAULT_KEY = 'W4kzH9r0';
 
@@ -20,7 +22,7 @@ export const COLOR_BYTE_BLOCK_CONTRAST = 0.5;
 export const MIN_PIXEL_BLOCK_WIDTH = 16;
 
 /** PixelGroupの最小Padding幅 */
-export const MIN_PIXEL_GROUP_PADDING = 2;
+export const MIN_PIXEL_GROUP_PADDING = 3;
 
 /** 色反転時についでで行うコントラストの度合。0 < x < 1 で、0に近いほど灰色になる */
 export const LOW_CONTRAST_LEVEL = 0.2;
@@ -44,3 +46,35 @@ export const COLOR_PALETTE = [
   '#ffc107',
   '#ff5722',
 ];
+
+export const DEFAULT_ENCODE_OPTIONS = {
+  doSwap: true,
+  doRotate: true,
+  doNega: true,
+  doColorShift: false,
+  contrastLevel: 0.9,
+  shiftColor: '888888',
+  withKey: false,
+  key: '',
+  pos: 'bottom' as ClipPos,
+  fillColor: '000000',
+};
+
+export const DEFAULT_DECODE_OPTIONS = {
+  doCrop: true,
+  padding: 2,
+  offsetX: 0,
+  offsetY: 0,
+  key: '',
+};
+
+export const DEFAULT_AREA_SELECT_OPTION = {
+  zoom: 'ff0000',
+  gridSize: 8,
+  spacing: 2,
+};
+
+export const DEFAULT_TRIAL_DECODE_OPTIONS = {
+  isJPG: true,
+  scale: 100,
+};

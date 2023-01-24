@@ -37,6 +37,24 @@ export type DecodeOptions = {
 };
 
 /**
+ * 画像のどこを隠すかの情報
+ */
+export type SelectedAreaInfo = {
+  imageData: ImageData;
+  selectedAreas: RectArea[];
+  gridSize: number;
+};
+
+/**
+ * 範囲指定時のオプション
+ */
+
+export type AreaSelectOptions = {
+  zoom: string;
+  gridSize: number;
+};
+
+/**
  * 切り出した隠蔽部分を置く場
  */
 export type ClipPos = 'top' | 'right' | 'bottom' | 'left';
@@ -55,3 +73,12 @@ export type Pixel = [number, number, number];
  * グループ化したピクセル
  */
 export type PixelGroup = Pixel[];
+
+/**
+ * ページ種別
+ */
+export type Page =
+  | 'encoder'
+  | 'decoder'
+  | 'encodeAreaSelector'
+  | 'encodeSetting';

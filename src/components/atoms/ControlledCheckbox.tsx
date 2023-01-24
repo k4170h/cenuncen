@@ -32,7 +32,9 @@ const ControlledCheckbox = <T extends FieldValues>({
                 <FormControlLabel
                   label={label}
                   style={{ width: 'auto' }}
-                  control={<Checkbox {...field} checked={field.value} />}
+                  control={
+                    <Checkbox {...field} checked={field.value} size="small" />
+                  }
                 />
               </>
             )}

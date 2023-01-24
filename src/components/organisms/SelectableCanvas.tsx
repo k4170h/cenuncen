@@ -1,103 +1,51 @@
 import styled from '@emotion/styled';
-import { Box, Button, Slider, Stack } from '@mui/material';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { RectArea } from '../../utils/types';
 import {
   createCanvas,
   createCanvasFromImage,
   getContext,
 } from '../../utils/canvasUtils';
-import { getNear, getNearCeil } from '../../utils/mathUtils';
+import { getNear } from '../../utils/mathUtils';
 import {
   COLOR_PALETTE,
-  MIN_PIXEL_BLOCK_WIDTH,
-  MIN_RESIZED_IMAGE_WIDTH,
+  DEFAULT_AREA_SELECT_OPTION,
 } from '../../utils/definition';
-import {
-  convertRectAreaForGridSize,
-  getGridPadding,
-} from '../../utils/convertUtils';
-import Grid3x3OutlinedIcon from '@mui/icons-material/Grid3x3Outlined';
-import Grid4x4OutlinedIcon from '@mui/icons-material/Grid4x4Outlined';
+import { convertRectAreaForGridSize } from '../../utils/convertUtils';
+import { PanningInfo } from './PanningWrapper';
 
-const CanvasBase = styled(Box)({
-  boxShadow: 'inset 0 1px 3px 0px rgba(0,0,0,.2)',
-  textAlign: 'center',
-  backgroundColor: '#ccc',
-  padding: '8px',
-  // overflow: 'auto',
-  width: '100%',
-  position: 'relative',
-});
-const CanvasWrapper = styled(Box)({
-  display: 'inline-block',
-  position: 'relative',
-});
-
-const ButtonWrapper = styled(Box)({
-  position: 'absolute',
-  backgroundColor: '#fff',
-  padding: '4px',
-  boxShadow: '0 1px 3px 0px rgba(0,0,0,.2)',
-});
-
-const SliderWrapper = styled(Box)({
-  backgroundColor: '#fff',
-  width: '200px',
-  height: '30px',
-  display: 'block',
-  position: 'sticky',
-  left: 'calc( 50% - 100px )',
-  top: '70px',
-  marginBottom: '10px',
-  padding: '8px',
-  borderRadius: '4px',
-  boxShadow: '0 1px 3px 0px rgba(0,0,0,.2)',
-  zIndex: 500,
-});
+const Canvas = styled('canvas')({});
 
 type Props = {
   imageData: ImageData | null;
+  options: typeof DEFAULT_AREA_SELECT_OPTION;
   selectedAreas: RectArea[];
-  onSelectArea: (area: RectArea) => void;
-  onChangeGridSize: (gridSize: number) => void;
+  onSelectArea: (v: RectArea) => void;
 };
 
 const SelectableCanvas = ({
   imageData,
-  onSelectArea,
+  options: { gridSize, spacing },
   selectedAreas,
-  onChangeGridSize,
+  onSelectArea,
 }: Props) => {
   const [mouseDown, setMouseDown] = useState(false);
-  const [addable, setAddable] = useState(false);
   const [startPos, setStartPos] = useState<[number, number]>([0, 0]);
   const [endPos, setEndPos] = useState<[number, number]>([0, 0]);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [baseImageData, setBaseImageData] = useState<ImageData | null>(null);
-  const [gridSize, setGridSize] = useState<number>(16);
-  const [minGridSize, setMinGridSize] = useState<number>(16);
   const [mouseMoved, setMouseMoved] = useState(false);
 
-  // グリッドの最小幅を算出
-  useEffect(() => {
-    if (imageData == null) {
-      return;
-    }
-    const longStroke =
-      imageData.width > imageData.height ? imageData.width : imageData.height;
-    let minGridSize = Math.ceil(
-      (MIN_PIXEL_BLOCK_WIDTH * longStroke) / MIN_RESIZED_IMAGE_WIDTH
-    );
-    minGridSize = minGridSize + (8 - (minGridSize % 8));
-    if (minGridSize < MIN_PIXEL_BLOCK_WIDTH) {
-      minGridSize = MIN_PIXEL_BLOCK_WIDTH;
-    }
+  const { zoom } = useContext(PanningInfo);
 
-    setMinGridSize(minGridSize);
-    setGridSize(minGridSize);
-    onChangeGridSize(minGridSize);
-  }, [imageData, onChangeGridSize]);
+  // const { selectedAreas } = useContext(AppState);
+  // const { setSelectedAreas } = useContext(AppStateFunc);
 
   // 下地になるImageDataを作成する
   useEffect(() => {
@@ -114,12 +62,7 @@ const SelectableCanvas = ({
     // 選択済み矩形を反映したimageDataを作る
     const [cv, ctx] = createCanvasFromImage(imageData);
 
-    // selectedAreas.forEach((v, i) => {
-    //   ctx.fillStyle = '#000';
-    //   ctx.fillRect(...v);
-    // });
-
-    const padding = getGridPadding(imageData.width, imageData.height);
+    const padding = spacing; //getGridPadding(imageData.width, imageData.height);
     ctx.fillStyle = '#000';
     selectedAreas.forEach((v, i) => {
       ctx.strokeStyle = COLOR_PALETTE[i % COLOR_PALETTE.length];
@@ -128,33 +71,41 @@ const SelectableCanvas = ({
       // グリッド内のPaddingより内側だけを塗りつぶす
       for (let i = 0; i < v[3]; i += gridSize) {
         for (let j = 0; j < v[2]; j += gridSize) {
-          if (i === 0 && j === 0) {
-            console.log('conf', v[0] + j + padding, v[1] + i + padding);
-          }
           const rectArea = convertRectAreaForGridSize(
             v,
-
             imageData.width,
             imageData.height,
             gridSize
           );
-          ctx.strokeRect(
+          const rect = [
             rectArea[0] + j + padding,
             rectArea[1] + i + padding,
             gridSize - padding * 2,
-            gridSize - padding * 2
-          );
-          ctx.fillRect(
-            rectArea[0] + j + padding,
-            rectArea[1] + i + padding,
             gridSize - padding * 2,
-            gridSize - padding * 2
-          );
+          ] as const;
+
+          ctx.lineWidth = 1;
+          ctx.strokeRect(...rect);
+          ctx.fillRect(...rect);
+
+          ctx.lineWidth = 2;
+          strokeLine(ctx, [
+            rect[0],
+            rect[1],
+            rect[0] + rect[2],
+            rect[1] + rect[3],
+          ]);
+          strokeLine(ctx, [
+            rect[0] + rect[2],
+            rect[1],
+            rect[0],
+            rect[1] + rect[3],
+          ]);
         }
       }
     });
     setBaseImageData(ctx.getImageData(0, 0, cv.width, cv.height));
-  }, [imageData, selectedAreas, gridSize]);
+  }, [imageData, selectedAreas, gridSize, spacing]);
 
   // baseImageDataに変更があればCanvasに反映
   useEffect(() => {
@@ -178,7 +129,6 @@ const SelectableCanvas = ({
 
   // 選択範囲のリセット
   const refleshArea = useCallback(() => {
-    setAddable(false);
     setStartPos([0, 0]);
     setEndPos([0, 0]);
   }, []);
@@ -191,17 +141,20 @@ const SelectableCanvas = ({
         return;
       }
 
+      if (!baseImageData) {
+        return;
+      }
+
       setMouseMoved(false);
       setMouseDown(true);
-      setAddable(false);
       // ドラッグ開始地点記録
       const rect = (e.target as HTMLElement).getBoundingClientRect();
       setStartPos([
-        getNear(e.clientX - rect.left, 8),
-        getNear(e.clientY - rect.top, 8),
+        getNear((e.clientX - rect.left) * (1 / zoom), 8),
+        getNear((e.clientY - rect.top) * (1 / zoom), 8),
       ]);
     },
-    []
+    [baseImageData, zoom]
   );
 
   // マウスドラッグ中
@@ -210,10 +163,17 @@ const SelectableCanvas = ({
       if (mouseDown) {
         setMouseMoved(true);
 
+        if (!baseImageData) {
+          return;
+        }
+
         // 座標を求める
         const rect = (e.target as HTMLElement).getBoundingClientRect();
-        const x = getNear(e.clientX - rect.left, 8);
-        const y = getNear(e.clientY - rect.top, 8);
+        // const x = getNear(e.clientX - rect.left, 8);
+        // const y = getNear(e.clientY - rect.top, 8);
+
+        const x = getNear((e.clientX - rect.left) * (1 / zoom), 8);
+        const y = getNear((e.clientY - rect.top) * (1 / zoom), 8);
 
         setEndPos([x, y]);
 
@@ -235,11 +195,6 @@ const SelectableCanvas = ({
         ctx.strokeStyle = ptn;
         ctx.fillStyle = 'rgba(0,0,0,.2)';
         ctx.lineWidth = 1;
-        // ctx.strokeRect(
-        //   ...startPos,
-        //   getNear(x - startPos[0], 8),
-        //   getNear(y - startPos[1], 8)
-        // );
 
         // 塗りつぶされる範囲をやってく
         const rectArea = convertRectAreaForGridSize(
@@ -249,31 +204,28 @@ const SelectableCanvas = ({
           gridSize
         );
 
-        const padding = getGridPadding(
-          baseImageData.width,
-          baseImageData.height
-        );
+        const padding = spacing; //getGridPadding(
+        //   baseImageData.width,
+        //   baseImageData.height
+        // );
 
         // グリッド内のPaddingより内側だけを塗りつぶす
         for (let i = 0; i < rectArea[3]; i += gridSize) {
           for (let j = 0; j < rectArea[2]; j += gridSize) {
-            ctx.strokeRect(
+            const rect = [
               rectArea[0] + j + padding,
               rectArea[1] + i + padding,
               gridSize - padding * 2,
-              gridSize - padding * 2
-            );
-            ctx.fillRect(
-              rectArea[0] + j + padding,
-              rectArea[1] + i + padding,
               gridSize - padding * 2,
-              gridSize - padding * 2
-            );
+            ] as const;
+
+            ctx.strokeRect(...rect);
+            ctx.fillRect(...rect);
           }
         }
       }
     },
-    [startPos, mouseDown, baseImageData, gridSize]
+    [startPos, mouseDown, baseImageData, gridSize, zoom, spacing]
   );
   // マウスドラッグ完了
   const handleMouseUp = useCallback(
@@ -282,100 +234,42 @@ const SelectableCanvas = ({
 
       if (!mouseMoved) {
         refleshCanvas();
-        setAddable(false);
         return;
       }
 
       if (startPos[0] === endPos[0] || startPos[1] === endPos[1]) {
         return;
       }
+
       if (
         startPos[0] !== 0 ||
         startPos[1] !== 0 ||
         endPos[0] !== 0 ||
         endPos[1] !== 0
       ) {
-        setAddable(true);
+        // setSelectedAreas([...selectedAreas, getSelectedArea(startPos, endPos)]);
+        onSelectArea(getSelectedArea(startPos, endPos));
+        refleshArea();
       }
     },
-    [startPos, endPos, refleshCanvas, mouseMoved]
+    [startPos, endPos, mouseMoved, refleshCanvas, refleshArea, onSelectArea]
   );
+  if (canvas.current) {
+    canvas.current.oncontextmenu = () => false;
+    canvas.current.onwheel = () => false;
+  }
 
   return (
     <>
       {baseImageData != null && (
-        <>
-          <CanvasBase>
-            <SliderWrapper>
-              <Stack
-                spacing={2}
-                direction="row"
-                sx={{ mb: 1 }}
-                alignItems="center"
-              >
-                <Grid4x4OutlinedIcon />
-                <Slider
-                  value={gridSize}
-                  step={8}
-                  valueLabelDisplay="auto"
-                  min={getNearCeil(minGridSize ?? 8, 8)}
-                  max={getNearCeil(minGridSize ?? 8, 8) + 40}
-                  onChange={(_, v) => {
-                    setGridSize(v as number);
-
-                    console.log('onchange!', v);
-                    onChangeGridSize(v as number);
-                  }}
-                />
-                <Grid3x3OutlinedIcon />
-              </Stack>
-            </SliderWrapper>
-            <CanvasWrapper>
-              <canvas
-                ref={canvas}
-                width="100"
-                height="0"
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-              ></canvas>
-
-              {addable && (
-                <ButtonWrapper
-                  style={{
-                    left: Math.abs(endPos[0]),
-                    top: Math.abs(endPos[1]),
-                  }}
-                >
-                  <Stack direction="row" spacing={2}>
-                    <Button
-                      onClick={() => {
-                        onSelectArea(getSelectedArea(startPos, endPos));
-                        refleshArea();
-                      }}
-                      disabled={!addable}
-                      variant="contained"
-                      size="small"
-                    >
-                      add
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        refleshCanvas();
-                        refleshArea();
-                      }}
-                      disabled={!addable}
-                      variant="contained"
-                      size="small"
-                    >
-                      cancel
-                    </Button>
-                  </Stack>
-                </ButtonWrapper>
-              )}
-            </CanvasWrapper>
-          </CanvasBase>
-        </>
+        <Canvas
+          ref={canvas}
+          width="100"
+          height="0"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+        />
       )}
     </>
   );
@@ -425,4 +319,11 @@ const getPattern = (baseCtx: CanvasRenderingContext2D) => {
     throw new Error();
   }
   return ptn;
+};
+
+const strokeLine = (ctx: CanvasRenderingContext2D, path: RectArea) => {
+  ctx.beginPath();
+  ctx.moveTo(path[0], path[1]);
+  ctx.lineTo(path[2], path[3]);
+  ctx.stroke();
 };
