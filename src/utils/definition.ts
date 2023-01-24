@@ -72,6 +72,7 @@ export const DEFAULT_AREA_SELECT_OPTION = {
   zoom: 'ff0000',
   gridSize: 8,
   spacing: 2,
+  withColor: true,
 };
 
 export const DEFAULT_TRIAL_DECODE_OPTIONS = {

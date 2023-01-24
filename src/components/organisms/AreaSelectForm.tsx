@@ -13,6 +13,8 @@ import AppsIcon from '@mui/icons-material/Apps';
 import FormTitle from '../atoms/FormTitle';
 import WidthFullSharpIcon from '@mui/icons-material/WidthFullSharp';
 import WidthNormalSharpIcon from '@mui/icons-material/WidthNormalSharp';
+import ControlledSwitch from '../atoms/ControlledSwitch';
+import { FormLi, FormUl } from '../atoms/FormList';
 
 type Props = {
   disabled: boolean;
@@ -88,31 +90,47 @@ const AreaSelectForm = ({
 
   return (
     <>
-      <Stack spacing={1}>
-        <FormTitle>Area Select Option</FormTitle>
-        <ControlledSlider
-          control={control}
-          name="gridSize"
-          min={minGridSize}
-          max={minGridSize + 40}
-          step={8}
-          right={<GridViewSharpIcon />}
-          left={<AppsIcon />}
-          disabled={disabled}
-          label="Block size"
-        />
-        <ControlledSlider
-          control={control}
-          name="spacing"
-          min={minSpacing}
-          max={minSpacing + 5}
-          step={1}
-          right={<WidthFullSharpIcon />}
-          left={<WidthNormalSharpIcon />}
-          disabled={disabled}
-          label="Spacing"
-        />
-      </Stack>
+      <FormTitle>Area Select Option</FormTitle>
+      <FormUl>
+        <FormLi>
+          <Stack>
+            <ControlledSlider
+              control={control}
+              name="gridSize"
+              min={minGridSize}
+              max={minGridSize + 40}
+              step={8}
+              right={<GridViewSharpIcon />}
+              left={<AppsIcon />}
+              disabled={disabled}
+              label="Block size"
+            />
+          </Stack>
+        </FormLi>
+        <FormLi>
+          <Stack>
+            <ControlledSlider
+              control={control}
+              name="spacing"
+              min={minSpacing}
+              max={minSpacing + 5}
+              step={1}
+              right={<WidthFullSharpIcon />}
+              left={<WidthNormalSharpIcon />}
+              disabled={disabled}
+              label="Spacing"
+            />
+          </Stack>
+        </FormLi>
+        <FormLi>
+          <ControlledSwitch
+            control={control}
+            name="withColor"
+            disabled={disabled}
+            label="Coloring"
+          />
+        </FormLi>
+      </FormUl>
     </>
   );
 };
