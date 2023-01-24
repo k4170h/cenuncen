@@ -28,11 +28,12 @@ const Base = styled(Box)({
   position: 'relative',
 });
 
-const Target = styled(Box)({
+const TargetPan = styled(Box)({
   position: 'absolute',
   top: 0,
   left: 0,
 });
+const TargetZoom = styled(Box)({});
 
 const ButtonWrapper = styled(Stack)({
   position: 'absolute',
@@ -71,6 +72,7 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
     0, 0,
   ]);
   const [targetPos, setTargetPos] = useState([0, 0]);
+  const [lastTargetSize, setLastTargetSize] = useState([0, 0]);
   const [mouseMovedTargetPos, setMouseMovedTargetPos] = useState([0, 0]);
   const baseRef = useRef<HTMLDivElement>();
   const targetRef = useRef<HTMLDivElement>();
@@ -182,6 +184,40 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
     }
   }, []);
 
+  // Targetのサイズが変わったらその位置で中央寄せ
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(() => {
+      if (!targetRef.current) {
+        return;
+      }
+
+      const currentSize = [
+        targetRef.current.clientWidth,
+        targetRef.current.clientHeight,
+      ];
+
+      if (currentSize.join() === lastTargetSize.join()) {
+        return;
+      }
+
+      setTargetPos([
+        targetPos[0] + (lastTargetSize[0] - currentSize[0]) / 2,
+        targetPos[1] + (lastTargetSize[1] - currentSize[1]) / 2,
+      ]);
+
+      setLastTargetSize([
+        targetRef.current.clientWidth,
+        targetRef.current.clientHeight,
+      ]);
+    });
+
+    targetRef.current && resizeObserver.observe(targetRef.current);
+
+    return (): void => {
+      resizeObserver.disconnect();
+    };
+  }, [lastTargetSize, targetPos]);
+
   // 親コンポーネントから実施する用
   useImperativeHandle(ref, () => ({
     moveToCenter: () => {
@@ -212,20 +248,27 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
           <Button onClick={() => fitImage()}>Fit</Button>
           <Button onClick={() => moveToCenter()}>Center</Button>
         </ButtonWrapper>
-        <Target
+        <TargetPan
           ref={targetRef}
           style={{
-            transform: `scale(${zoom * 0.01})`,
             top: targetPos[1],
             left: targetPos[0],
           }}
         >
-          <PanningInfo.Provider value={{ ...panningInfo }}>
-            <PanningFunc.Provider value={{ moveToCenter, resetZoom, fitImage }}>
-              {children}
-            </PanningFunc.Provider>
-          </PanningInfo.Provider>
-        </Target>
+          <TargetZoom
+            style={{
+              transform: `scale(${zoom * 0.01})`,
+            }}
+          >
+            <PanningInfo.Provider value={{ ...panningInfo }}>
+              <PanningFunc.Provider
+                value={{ moveToCenter, resetZoom, fitImage }}
+              >
+                {children}
+              </PanningFunc.Provider>
+            </PanningInfo.Provider>
+          </TargetZoom>
+        </TargetPan>
       </Base>
     </>
   );
