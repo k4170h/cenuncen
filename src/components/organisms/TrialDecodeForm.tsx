@@ -13,6 +13,7 @@ import {
 } from '../atoms/FlatAccordion';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { TrialDecodeOptions } from '../../utils/types';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
 type Props = {
   onChange?: (v: TrialDecodeOptions) => void;
@@ -87,9 +88,12 @@ const TrialDecodeForm = ({
               </Stack>
             </FormLi>
           </FormUl>
-          <Button type="submit" variant="contained" disabled={disabled}>
-            Decode
-          </Button>
+          <Stack>
+            <Button type="submit" variant="contained" disabled={disabled}>
+              Decode
+              <NavigateNextIcon />
+            </Button>
+          </Stack>
         </form>
       </FlatAccordionDetails>
     </FlatAccordion>
