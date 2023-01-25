@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Box, Button } from '@mui/material';
+import { Box, Button, IconButton } from '@mui/material';
 import { Stack } from '@mui/system';
 import React, {
   createContext,
@@ -11,6 +11,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import SettingsOverscanIcon from '@mui/icons-material/SettingsOverscan';
+import FilterCenterFocusIcon from '@mui/icons-material/FilterCenterFocus';
 
 const ZOOM_STEP = 5;
 const MIN_ZOOM = 10;
@@ -72,10 +74,12 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
     0, 0,
   ]);
   const [targetPos, setTargetPos] = useState([0, 0]);
-  const [lastTargetSize, setLastTargetSize] = useState([0, 0]);
+  // const [lastTargetSize, setLastTargetSize] = useState([0, 0]);
+
   const [mouseMovedTargetPos, setMouseMovedTargetPos] = useState([0, 0]);
   const baseRef = useRef<HTMLDivElement>();
   const targetRef = useRef<HTMLDivElement>();
+  const lastTargetSize = useRef([0, 0]);
 
   // Zoom は 整数の% で扱う。小数点だと誤差出る
   const [zoom, setZoom] = useState(100);
@@ -85,6 +89,13 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
   // マウスホイール時拡大縮小
   const zoomCanvas = useCallback(
     (v: number) => {
+      if (
+        !targetRef.current ||
+        !targetRef.current.childNodes[0].hasChildNodes()
+      ) {
+        return;
+      }
+
       const zoom_ = zoom - (zoom % ZOOM_STEP);
       if (v > 0) {
         setZoom(zoom_ - ZOOM_STEP <= MIN_ZOOM ? MIN_ZOOM : zoom_ - ZOOM_STEP);
@@ -97,6 +108,13 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (
+        !targetRef.current ||
+        !targetRef.current.childNodes[0].hasChildNodes()
+      ) {
+        return;
+      }
+
       // 右クリックでなければ終了
       if (e.button !== 2 && e.button !== 1) {
         return;
@@ -187,7 +205,10 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
   // Targetのサイズが変わったらその位置で中央寄せ
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
-      if (!targetRef.current) {
+      if (
+        !targetRef.current ||
+        !targetRef.current.childNodes[0].hasChildNodes()
+      ) {
         return;
       }
 
@@ -196,19 +217,24 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
         targetRef.current.clientHeight,
       ];
 
-      if (currentSize.join() === lastTargetSize.join()) {
+      if (currentSize.join() === lastTargetSize.current.join()) {
         return;
       }
 
+      const currentPos = [
+        targetRef.current.offsetLeft,
+        targetRef.current.offsetTop,
+      ];
+
       setTargetPos([
-        targetPos[0] + (lastTargetSize[0] - currentSize[0]) / 2,
-        targetPos[1] + (lastTargetSize[1] - currentSize[1]) / 2,
+        currentPos[0] + (lastTargetSize.current[0] - currentSize[0]) / 2,
+        currentPos[1] + (lastTargetSize.current[1] - currentSize[1]) / 2,
       ]);
 
-      setLastTargetSize([
+      lastTargetSize.current = [
         targetRef.current.clientWidth,
         targetRef.current.clientHeight,
-      ]);
+      ];
     });
 
     targetRef.current && resizeObserver.observe(targetRef.current);
@@ -216,7 +242,7 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
     return (): void => {
       resizeObserver.disconnect();
     };
-  }, [lastTargetSize, targetPos]);
+  }, []);
 
   // 親コンポーネントから実施する用
   useImperativeHandle(ref, () => ({
