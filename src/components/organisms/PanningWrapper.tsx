@@ -11,8 +11,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import SettingsOverscanIcon from '@mui/icons-material/SettingsOverscan';
-import FilterCenterFocusIcon from '@mui/icons-material/FilterCenterFocus';
 
 const ZOOM_STEP = 5;
 const MIN_ZOOM = 10;
@@ -42,7 +40,6 @@ const ButtonWrapper = styled(Stack)({
   bottom: 0,
   left: 0,
   zIndex: 100,
-  // direction: 'row',
 });
 
 // 子要素に情報を与える用

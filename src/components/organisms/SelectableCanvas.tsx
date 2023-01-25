@@ -242,8 +242,8 @@ const SelectableCanvas = ({
       {baseImageData != null && (
         <Canvas
           ref={canvas}
-          width="100"
-          height="0"
+          width={baseImageData.width}
+          height={baseImageData.height}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
