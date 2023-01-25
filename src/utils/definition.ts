@@ -52,18 +52,13 @@ export const DEFAULT_ENCODE_OPTIONS = {
   doRotate: true,
   doNega: true,
   doColorShift: false,
-  contrastLevel: 0.9,
+  contrastLevel: 0.5,
   shiftColor: '888888',
   withKey: false,
   key: '',
   pos: 'bottom' as ClipPos,
   fillColor: '000000',
 };
-export type EncodeOptions = typeof DEFAULT_ENCODE_OPTIONS;
-export type RestoredEncodeOptions = Omit<
-  EncodeOptions,
-  'withKey' | 'pos' | 'fillColor'
->;
 
 export const DEFAULT_DECODE_OPTIONS = {
   doCrop: true,
@@ -72,7 +67,6 @@ export const DEFAULT_DECODE_OPTIONS = {
   offsetY: 0,
   key: '',
 };
-export type DecodeOptions = typeof DEFAULT_DECODE_OPTIONS;
 
 export const DEFAULT_AREA_SELECT_OPTION = {
   zoom: 'ff0000',
@@ -80,10 +74,8 @@ export const DEFAULT_AREA_SELECT_OPTION = {
   spacing: 2,
   withColor: true,
 };
-export type AreaSelectOptions = typeof DEFAULT_AREA_SELECT_OPTION;
 
 export const DEFAULT_TRIAL_DECODE_OPTIONS = {
   isJPG: true,
   scale: 100,
 };
-export type TrialDecodeOptions = typeof DEFAULT_TRIAL_DECODE_OPTIONS;
