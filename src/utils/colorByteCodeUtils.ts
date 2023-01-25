@@ -2,7 +2,7 @@
 import { createCanvas } from './canvasUtils';
 import { Buffer } from 'buffer';
 import { decode, encode } from '@msgpack/msgpack';
-import { EncodeOptions, Pixel, RectArea } from './types';
+import { EncodeOptions, Pixel, RectArea, RestoredEncodeOptions } from './types';
 import {
   MIN_COLOR_BYTE_BLOCK_WIDTH,
   MIN_RESIZED_IMAGE_WIDTH,
@@ -261,16 +261,25 @@ const readColorByteCode = (imageData: ImageData) => {
 };
 
 // カラーバイトコードを作る
-export const dataToColorByteCode = (
-  encodeOptions: EncodeOptions,
-  filledAreas: RectArea[],
-  clipArea: RectArea,
-  mainArea: RectArea,
-  size: [number, number]
-) => {
+export const dataToColorByteCode = ({
+  encodeOptions,
+  gridSize,
+  filledAreas,
+  clipArea,
+  mainArea,
+  size,
+}: {
+  encodeOptions: EncodeOptions;
+  gridSize: number;
+  filledAreas: RectArea[];
+  clipArea: RectArea;
+  mainArea: RectArea;
+  size: [number, number];
+}) => {
   // データ作成
   const data = toData({
     encodeOptions,
+    gridSize,
     filledAreas,
     clipArea,
     mainArea,
@@ -326,20 +335,22 @@ export const fromData = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any
 ): {
-  encodeOptions: EncodeOptions;
+  encodeOptions: RestoredEncodeOptions;
+  gridSize: number;
   filledAreas: RectArea[];
   size: [number, number];
   clippedArea: RectArea;
   mainArea: RectArea;
 } => {
   const result = {
+    gridSize: data.o.g,
     encodeOptions: {
-      gridSize: data.o.g,
-      noSwap: data.o.s,
-      noRotate: data.o.r,
-      noNega: data.o.n,
-      // hashKey: data.o.k ? DEFAULT_KEY : undefined,
-      shiftColor: data.o.c,
+      doSwap: data.o.s ? false : true,
+      doRotate: data.o.r ? false : true,
+      doNega: data.o.n ? false : true,
+      doColorShift: data.o.c ? true : false,
+      contrastLevel: data.o.c ? data.o.c[0] : undefined,
+      shiftColor: data.o.c ? data.o.c[1] : undefined,
     },
     filledAreas: data.c,
     size: data.s,
@@ -359,35 +370,20 @@ export const fromData = (
   ) {
     throw new Error('Invalid ColorByteCode Type.');
   }
-
-  if (result.encodeOptions.shiftColor) {
-    const cs = result.encodeOptions.shiftColor;
-    if (!cs.length || cs.length !== 2) {
-      result.encodeOptions.shiftColor = undefined;
-    } else if (!cs[0] || cs[0] <= 0 || 1 <= cs[0]) {
-      result.encodeOptions.shiftColor = undefined;
-    } else if (!cs[1].length || cs[1].length !== 3) {
-      result.encodeOptions.shiftColor = undefined;
-    } else {
-      result.encodeOptions.shiftColor = {
-        contrast: Number(cs[0]),
-        color: cs[1],
-      };
-    }
-  }
-
   console.log('load', result);
   return result;
 };
 
 export const toData = ({
   encodeOptions,
+  gridSize,
   filledAreas,
   clipArea,
   mainArea,
   size,
 }: {
   encodeOptions: EncodeOptions;
+  gridSize: number;
   // 隠蔽エリア [x,y,w/gridSize,h/gridSize]
   filledAreas: RectArea[];
   // 隠蔽で切り取った画像 [x,y,w/gridSize,h/gridSize]
@@ -400,16 +396,12 @@ export const toData = ({
   return {
     s: size,
     o: {
-      // k: encodeOptions.hashKey != null ? 1 : 0,
-      s: encodeOptions.noSwap ? 1 : undefined,
-      n: encodeOptions.noNega ? 1 : undefined,
-      r: encodeOptions.noRotate ? 1 : undefined,
-      g: encodeOptions.gridSize,
-      c: encodeOptions.shiftColor
-        ? [
-            encodeOptions.shiftColor.contrast,
-            colorCode3To6(encodeOptions.shiftColor.color),
-          ]
+      s: encodeOptions.doSwap ? undefined : 1,
+      n: encodeOptions.doNega ? undefined : 1,
+      r: encodeOptions.doRotate ? undefined : 1,
+      g: gridSize,
+      c: encodeOptions.doColorShift
+        ? [encodeOptions.contrastLevel, colorCode3To6(encodeOptions.shiftColor)]
         : undefined,
     },
     c: filledAreas,

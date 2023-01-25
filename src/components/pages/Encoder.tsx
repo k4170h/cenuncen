@@ -24,7 +24,12 @@ import {
   resizeImageData,
 } from '../../utils/canvasUtils';
 import TrialDecodeForm from '../organisms/TrialDecodeForm';
-import { RectArea } from '../../utils/types';
+import {
+  DecodeOptions,
+  EncodeOptions,
+  RectArea,
+  TrialDecodeOptions,
+} from '../../utils/types';
 
 const ToolBox = styled(Box)({
   position: 'fixed',
@@ -65,10 +70,7 @@ const Encoder = () => {
   const [tryDecoded, setTryDecoded] = useState(false);
 
   const encode = useCallback(
-    (v?: {
-      encodeOptions?: typeof DEFAULT_ENCODE_OPTIONS;
-      imageDataToEncode?: ImageData;
-    }) => {
+    (v?: { encodeOptions?: EncodeOptions; imageDataToEncode?: ImageData }) => {
       const {
         encodeOptions: encodeOptions_,
         imageDataToEncode: imageDataToEncode_,
@@ -107,10 +109,7 @@ const Encoder = () => {
   );
 
   const decode = useCallback(
-    (v?: {
-      decodeOptions?: typeof DEFAULT_DECODE_OPTIONS;
-      imageDataToDecode?: ImageData;
-    }) => {
+    (v?: { decodeOptions?: DecodeOptions; imageDataToDecode?: ImageData }) => {
       const {
         decodeOptions: decodeOptions_,
         imageDataToDecode: imageDataToDecode_,
@@ -143,7 +142,7 @@ const Encoder = () => {
   );
 
   const decodeFromEncodedImage = useCallback(
-    (options: typeof DEFAULT_TRIAL_DECODE_OPTIONS) => {
+    (options: TrialDecodeOptions) => {
       if (!encodedImageData) {
         console.error('invalid encoded ImageData');
         return;

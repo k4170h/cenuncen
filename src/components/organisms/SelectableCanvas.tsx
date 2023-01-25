@@ -6,17 +6,14 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { RectArea } from '../../utils/types';
+import { AreaSelectOptions, RectArea } from '../../utils/types';
 import {
   createCanvas,
   createCanvasFromImage,
   getContext,
 } from '../../utils/canvasUtils';
 import { getNear } from '../../utils/mathUtils';
-import {
-  COLOR_PALETTE,
-  DEFAULT_AREA_SELECT_OPTION,
-} from '../../utils/definition';
+import { COLOR_PALETTE } from '../../utils/definition';
 import { convertRectAreaForGridSize } from '../../utils/convertUtils';
 import { PanningInfo } from './PanningWrapper';
 
@@ -24,7 +21,7 @@ const Canvas = styled('canvas')({});
 
 type Props = {
   imageData: ImageData | null;
-  options: typeof DEFAULT_AREA_SELECT_OPTION;
+  options: AreaSelectOptions;
   selectedAreas: RectArea[];
   onSelectArea: (v: RectArea) => void;
 };

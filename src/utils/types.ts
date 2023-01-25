@@ -1,40 +1,19 @@
-/**
- * エンコードのオプション
- */
-export type EncodeOptions = {
-  // 隠蔽範囲のグリッドサイズ
-  gridSize: number;
-  // 位置のシャッフル有無
-  noSwap?: boolean;
-  // 回転の有無
-  noRotate?: boolean;
-  // 色の反転有無
-  noNega?: boolean;
-  // ハッシュキー
-  hashKey?: string;
-  // 色をコントラストを下げてシフトする
-  shiftColor?: {
-    // コントラストの度合。0 < x < 1 で、0に近いほど灰色になる
-    contrast: number;
-    // 0-7
-    color: string;
-  };
-};
+import {
+  DEFAULT_AREA_SELECT_OPTION,
+  DEFAULT_DECODE_OPTIONS,
+  DEFAULT_ENCODE_OPTIONS,
+  DEFAULT_TRIAL_DECODE_OPTIONS,
+} from './definition';
 
-/**
- * エンコードのオプション
- */
-export type EncodeFormValues = EncodeOptions & {
-  clipPos: ClipPos;
-  backgroundColor: string;
-};
-
-export type DecodeOptions = {
-  // 鍵
-  hashKey?: string;
-  // 切り抜くか
-  crop: boolean;
-};
+// 入力フォームの型
+export type EncodeOptions = typeof DEFAULT_ENCODE_OPTIONS;
+export type RestoredEncodeOptions = Omit<
+  EncodeOptions,
+  'key' | 'withKey' | 'pos' | 'fillColor'
+>;
+export type DecodeOptions = typeof DEFAULT_DECODE_OPTIONS;
+export type AreaSelectOptions = typeof DEFAULT_AREA_SELECT_OPTION;
+export type TrialDecodeOptions = typeof DEFAULT_TRIAL_DECODE_OPTIONS;
 
 /**
  * 画像のどこを隠すかの情報
@@ -42,15 +21,6 @@ export type DecodeOptions = {
 export type SelectedAreaInfo = {
   imageData: ImageData;
   selectedAreas: RectArea[];
-  gridSize: number;
-};
-
-/**
- * 範囲指定時のオプション
- */
-
-export type AreaSelectOptions = {
-  zoom: string;
   gridSize: number;
 };
 
