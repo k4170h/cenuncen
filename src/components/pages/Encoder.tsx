@@ -32,6 +32,7 @@ import {
 } from '../../utils/types';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import PendingBox from '../atoms/PendingBox';
 
 const ToolBox = styled(Box)({
   position: 'fixed',
@@ -63,6 +64,7 @@ const Encoder = () => {
     resetZoom: () => void;
     fitImage: () => void;
   }>();
+  const [pending, setPending] = useState(false);
   const [imageDataToEncode, setImageDataToEncode] = useState<ImageData>();
   const [encodedImageData, setEncodedImageData] = useState<ImageData>();
   const [imageDataToDecode, setImageDataToDecode] = useState<ImageData>();
@@ -79,7 +81,10 @@ const Encoder = () => {
   const [tryDecoded, setTryDecoded] = useState(false);
 
   const encode = useCallback(
-    (v?: { encodeOptions?: EncodeOptions; imageDataToEncode?: ImageData }) => {
+    async (v?: {
+      encodeOptions?: EncodeOptions;
+      imageDataToEncode?: ImageData;
+    }) => {
       const {
         encodeOptions: encodeOptions_,
         imageDataToEncode: imageDataToEncode_,
@@ -100,13 +105,21 @@ const Encoder = () => {
         return;
       }
 
-      const encodedImageData_ = encodeImageData(
-        imageData,
-        selectedAreas,
-        options,
-        areaSelectOptions
-      );
-      setEncodedImageData(encodedImageData_);
+      setPending(true);
+      await new Promise<void>((resolve) => {
+        setTimeout(() => {
+          setEncodedImageData(
+            encodeImageData(
+              imageData,
+              selectedAreas,
+              options,
+              areaSelectOptions
+            )
+          );
+          resolve();
+        }, 1);
+      });
+      setPending(false);
     },
     [
       areaSelectOptions,
@@ -118,7 +131,10 @@ const Encoder = () => {
   );
 
   const decode = useCallback(
-    (v?: { decodeOptions?: DecodeOptions; imageDataToDecode?: ImageData }) => {
+    async (v?: {
+      decodeOptions?: DecodeOptions;
+      imageDataToDecode?: ImageData;
+    }) => {
       const {
         decodeOptions: decodeOptions_,
         imageDataToDecode: imageDataToDecode_,
@@ -139,13 +155,17 @@ const Encoder = () => {
         return;
       }
 
-      try {
-        const decodedImageData_ = decodeImageData(imageData, options);
-        setDecodedImageData(decodedImageData_);
-      } catch (e) {
+      setPending(true);
+      await new Promise<void>((resolve) => {
+        setTimeout(() => {
+          setDecodedImageData(decodeImageData(imageData, options));
+          resolve();
+        }, 1);
+      }).catch((e) => {
         alert('failed to decode');
         console.error(e);
-      }
+      });
+      setPending(false);
     },
     [imageDataToDecode, setDecodedImageData, decodeOptions]
   );
@@ -162,24 +182,31 @@ const Encoder = () => {
         encodedImageData,
         (encodedImageData.width * options.scale) / 100
       );
+      let imagedataPromise: Promise<ImageData>;
       if (options.isJPG) {
         const [cv] = createCanvasFromImage(resizedImageData);
         const imageStr = cv.toDataURL('image/jpeg', 0.9);
-        const img = new Image();
-        img.onload = () => {
-          const [cv, cx] = createCanvasFromImage(img);
-          decode({
-            imageDataToDecode: cx.getImageData(0, 0, cv.width, cv.height),
-          });
-          setImageDataToDecode(cx.getImageData(0, 0, cv.width, cv.height));
-        };
-        img.src = imageStr;
+        imagedataPromise = new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            const [cv, cx] = createCanvasFromImage(img);
+            resolve(cx.getImageData(0, 0, cv.width, cv.height));
+          };
+          img.src = imageStr;
+        });
       } else {
-        decode({ imageDataToDecode: resizedImageData });
-        setImageDataToDecode(resizedImageData);
+        imagedataPromise = Promise.resolve(resizedImageData);
       }
-      setPage('decode');
+
       setTryDecoded(true);
+      imagedataPromise
+        .then((imageData) => {
+          setImageDataToDecode(imageData);
+          return decode({ imageDataToDecode: imageData });
+        })
+        .then(() => {
+          setPage('decode');
+        });
     },
     [decode, encodedImageData, setImageDataToDecode]
   );
@@ -281,8 +308,9 @@ const Encoder = () => {
           <Button
             disabled={!selectedAreas.length}
             onClick={() => {
-              setMode('encodeSetting');
-              encode();
+              encode().then(() => {
+                setMode('encodeSetting');
+              });
             }}
             variant="contained"
           >
@@ -302,7 +330,7 @@ const Encoder = () => {
           <Divider />
           <EncodeForm
             onChange={(v) => {
-              encode({ encodeOptions: v });
+              encode({ encodeOptions: v }).then();
               setEncodeOptions(v);
             }}
             encodeOptions={encodeOptions}
@@ -349,6 +377,7 @@ const Encoder = () => {
           <SaveButtons {...{ imageData: decodedImageData }} />
         </>
       </SlidableToolBox>
+      <PendingBox show={pending} />
     </>
   );
 };
