@@ -47,8 +47,6 @@ export type PixelGroup = Pixel[];
 /**
  * ページ種別
  */
-export type Page =
-  | 'encoder'
-  | 'decoder'
-  | 'encodeAreaSelector'
-  | 'encodeSetting';
+export type Page = 'encode' | 'decode';
+
+export type EncodeMode = 'areaSelect' | 'encodeSetting';

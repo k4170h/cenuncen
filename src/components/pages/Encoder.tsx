@@ -26,7 +26,9 @@ import {
 import TrialDecodeForm from '../organisms/TrialDecodeForm';
 import {
   DecodeOptions,
+  EncodeMode,
   EncodeOptions,
+  Page,
   RectArea,
   TrialDecodeOptions,
 } from '../../utils/types';
@@ -54,11 +56,13 @@ const SlidableToolBox = styled(ToolBox)({
   },
 });
 
-const Encoder = () => {
-  const [page, setPage] = useState<'encode' | 'decode'>('encode');
-  const [mode, setMode] = useState<'areaSelect' | 'encodeSetting'>(
-    'areaSelect'
-  );
+type Props = {
+  page: Page;
+};
+
+const Encoder = ({ page: defaultPage }: Props) => {
+  const [page, setPage] = useState<Page>(defaultPage);
+  const [mode, setMode] = useState<EncodeMode>('areaSelect');
   const panningRef = useRef<{
     moveToCenter: () => void;
     resetZoom: () => void;

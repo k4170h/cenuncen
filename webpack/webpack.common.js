@@ -6,8 +6,8 @@ const srcDir = path.join(__dirname, '..', 'src');
 module.exports = {
   entry: {
     converter: path.join(srcDir, 'converter.tsx'),
-    viewer: path.join(srcDir, 'viewer.tsx'),
-    options: path.join(srcDir, 'options.tsx'),
+    // viewer: path.join(srcDir, 'viewer.tsx'),
+    // options: path.join(srcDir, 'options.tsx'),
     background: path.join(srcDir, 'background.ts'),
     content_script: path.join(srcDir, 'content_script.tsx'),
   },

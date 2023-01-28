@@ -1,13 +1,29 @@
+type MenuId = 'decode' | 'openDecode';
+
 chrome.action.onClicked.addListener(async () => {
   const url = chrome.runtime.getURL('converter.html');
   await chrome.tabs.create({ url });
+  return true;
 });
 
 chrome.runtime.onInstalled.addListener(function (details) {
   chrome.contextMenus.create({
-    id: 'menu',
-    title: 'uncensoring',
+    id: 'parent',
+    title: 'uncen',
+    contexts: ['all'],
+  });
+
+  chrome.contextMenus.create({
+    id: 'decode' as MenuId,
+    title: 'decode',
     contexts: ['image'],
+    parentId: 'parent',
+  });
+  chrome.contextMenus.create({
+    id: 'openDecode' as MenuId,
+    title: 'open decoder',
+    contexts: ['all'],
+    parentId: 'parent',
   });
 });
 
@@ -17,6 +33,12 @@ chrome.runtime.onInstalled.addListener(function (details) {
  * 複数のメニューを登録した場合は、item.menuItemIdでクリックされたメニューが取得できる
  */
 chrome.contextMenus.onClicked.addListener((item, tab) => {
+  if ((item.menuItemId as MenuId) === 'openDecode') {
+    const url = chrome.runtime.getURL('converter.html?d=1');
+    chrome.tabs.create({ url });
+    return;
+  }
+
   if (!item.srcUrl) {
     return;
   }
@@ -25,10 +47,53 @@ chrome.contextMenus.onClicked.addListener((item, tab) => {
     return;
   }
 
-  chrome.tabs.sendMessage(tab.id, { type: 'type1', src: item.srcUrl });
-});
+  // 画像の取得を試みる
+  fetch(item.srcUrl, {
+    mode: 'no-cors',
+  })
+    .then((v) => {
+      return v.blob();
+    })
+    .then((blob) => {
+      if (
+        ['image/jpeg', 'image/gif', 'image/png', 'image/webp'].every(
+          (v) => blob.type !== v
+        )
+      ) {
+        throw new Error('not image data : ' + blob.type);
+      }
 
-chrome.runtime.onMessage.addListener((message) => {
-  const url = chrome.runtime.getURL('viewer.html?dataUrl=' + message.dataUrl);
-  chrome.tabs.create({ url });
+      return new Promise<string>((resolve) => {
+        const fileReader = new FileReader();
+        fileReader.onload = () => {
+          resolve(fileReader.result as string);
+        };
+        fileReader.readAsDataURL(blob);
+      });
+    })
+    .then((dataURI) => {
+      chrome.tabs.sendMessage(
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        tab.id!,
+        {
+          type: 'replaceImage',
+          dataURI,
+          src: item.srcUrl,
+        },
+        (v) => true
+      );
+    })
+    .catch((e) => {
+      // 403だった場合もあるので、content_script でも行わせる
+      chrome.tabs.sendMessage(
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        tab.id!,
+        {
+          type: 'replaceImage',
+          dataURI: null,
+          src: item.srcUrl,
+        },
+        (v) => true
+      );
+    });
 });
