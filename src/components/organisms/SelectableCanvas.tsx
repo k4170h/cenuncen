@@ -6,17 +6,14 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { RectArea } from '../../utils/types';
+import { AreaSelectOptions, RectArea } from '../../utils/types';
 import {
   createCanvas,
   createCanvasFromImage,
   getContext,
 } from '../../utils/canvasUtils';
 import { getNear } from '../../utils/mathUtils';
-import {
-  COLOR_PALETTE,
-  DEFAULT_AREA_SELECT_OPTION,
-} from '../../utils/definition';
+import { COLOR_PALETTE } from '../../utils/definition';
 import { convertRectAreaForGridSize } from '../../utils/convertUtils';
 import { PanningInfo } from './PanningWrapper';
 
@@ -24,7 +21,7 @@ const Canvas = styled('canvas')({});
 
 type Props = {
   imageData: ImageData | null;
-  options: typeof DEFAULT_AREA_SELECT_OPTION;
+  options: AreaSelectOptions;
   selectedAreas: RectArea[];
   onSelectArea: (v: RectArea) => void;
 };
@@ -41,11 +38,7 @@ const SelectableCanvas = ({
   const canvas = useRef<HTMLCanvasElement>(null);
   const [baseImageData, setBaseImageData] = useState<ImageData | null>(null);
   const [mouseMoved, setMouseMoved] = useState(false);
-
   const { zoom } = useContext(PanningInfo);
-
-  // const { selectedAreas } = useContext(AppState);
-  // const { setSelectedAreas } = useContext(AppStateFunc);
 
   // 下地になるImageDataを作成する
   useEffect(() => {
@@ -249,8 +242,8 @@ const SelectableCanvas = ({
       {baseImageData != null && (
         <Canvas
           ref={canvas}
-          width="100"
-          height="0"
+          width={baseImageData.width}
+          height={baseImageData.height}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}

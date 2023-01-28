@@ -2,7 +2,6 @@ import { Box, Stack, Typography } from '@mui/material';
 import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import ControlledTextarea from '../atoms/ControlledTextarea';
-import { DEFAULT_ENCODE_OPTIONS } from '../../utils/definition';
 import ControlledColorPicker from '../atoms/ControlledColorPicker';
 import ControlledSlider from '../atoms/ControlledSlider';
 import ContrastOutlinedIcon from '@mui/icons-material/ContrastOutlined';
@@ -16,21 +15,22 @@ import {
   FlatAccordionDetails,
   FlatAccordionSummary,
 } from '../atoms/FlatAccordion';
+import { EncodeOptions } from '../../utils/types';
 
 type Props = {
-  onChange?: (v: typeof DEFAULT_ENCODE_OPTIONS) => void;
-  encodeOptions: typeof DEFAULT_ENCODE_OPTIONS;
+  onChange?: (v: EncodeOptions) => void;
+  encodeOptions: EncodeOptions;
 };
 
 const EncodeForm = ({ onChange, encodeOptions }: Props) => {
-  const { control, watch } = useForm<typeof DEFAULT_ENCODE_OPTIONS>({
+  const { control, watch, setValue } = useForm<EncodeOptions>({
     defaultValues: encodeOptions,
     mode: 'onChange',
   });
   const watchForm = watch();
   const doShiftColor = watch('doColorShift');
   const withKey = watch('withKey');
-  const lastValue = useRef('');
+  const lastValue = useRef(JSON.stringify(encodeOptions));
 
   useEffect(() => {
     const watchFormStr = JSON.stringify(watchForm);
@@ -39,6 +39,17 @@ const EncodeForm = ({ onChange, encodeOptions }: Props) => {
       onChange && onChange(watchForm);
     }
   }, [watchForm, onChange]);
+
+  useEffect(() => {
+    if (
+      !watchForm.doNega &&
+      !watchForm.doRotate &&
+      !watchForm.doSwap &&
+      watchForm.withKey
+    ) {
+      setValue('withKey', false);
+    }
+  }, [watchForm, setValue]);
 
   return (
     <>
@@ -102,6 +113,11 @@ const EncodeForm = ({ onChange, encodeOptions }: Props) => {
                   control={control}
                   name="withKey"
                   label={<>Key</>}
+                  disabled={
+                    !watchForm.doNega &&
+                    !watchForm.doRotate &&
+                    !watchForm.doSwap
+                  }
                 />
               </FlatAccordionSummary>
               <FlatAccordionDetails>

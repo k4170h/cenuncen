@@ -21,7 +21,11 @@ const ImageDataCanvas = ({ imageData }: Props) => {
   return (
     <>
       {imageData != null && (
-        <canvas ref={canvas} width="100" height="0"></canvas>
+        <canvas
+          ref={canvas}
+          width={imageData.width}
+          height={imageData.height}
+        ></canvas>
       )}
     </>
   );

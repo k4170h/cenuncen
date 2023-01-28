@@ -8,9 +8,6 @@ import {
 } from './canvasUtils';
 import { colorByteCodeToData, dataToColorByteCode } from './colorByteCodeUtils';
 import {
-  DEFAULT_AREA_SELECT_OPTION,
-  DEFAULT_DECODE_OPTIONS,
-  DEFAULT_ENCODE_OPTIONS,
   DEFAULT_KEY,
   MIN_PIXEL_GROUP_PADDING,
   MIN_RESIZED_IMAGE_WIDTH,
@@ -30,7 +27,14 @@ import {
   shiftColorGroups,
   unShiftColorGroups,
 } from './pixelGroupUtils';
-import { EncodeOptions, PixelGroup, RectArea } from './types';
+import {
+  AreaSelectOptions,
+  DecodeOptions,
+  EncodeOptions,
+  PixelGroup,
+  RectArea,
+  RestoredEncodeOptions,
+} from './types';
 
 /**
  * imageDataの areas に option のシャッフルを適用し、その情報を下部に印字したものを返却する
@@ -42,10 +46,10 @@ import { EncodeOptions, PixelGroup, RectArea } from './types';
 export const encodeImageData = (
   imageData: ImageData,
   areas: RectArea[],
-  encodeOptions: typeof DEFAULT_ENCODE_OPTIONS,
-  areaSelectOptions: typeof DEFAULT_AREA_SELECT_OPTION
+  encodeOptions: EncodeOptions,
+  areaSelectOptions: AreaSelectOptions
 ) => {
-  const options = { ...formToEncodeOption(encodeOptions) };
+  // const options = { ...formToEncodeOption(encodeOptions) };
 
   const gs = areaSelectOptions.gridSize;
 
@@ -62,10 +66,10 @@ export const encodeImageData = (
   }, [] as PixelGroup[]);
 
   // それをシャッフル
-  const shuffledPixelGrooups = shufflePixelGrooups(clippedPixelGroups, {
-    ...options,
-    gridSize: gs,
-  });
+  const shuffledPixelGrooups = shufflePixelGrooups(
+    clippedPixelGroups,
+    encodeOptions
+  );
 
   // それをImageDataの配列に
   const shuffledImageDatas = shuffledPixelGrooups.map((v) =>
@@ -74,7 +78,7 @@ export const encodeImageData = (
 
   // そのデータを並べたImageData作る
   const [xCount, yCount] = (() => {
-    switch (options.clipPos) {
+    switch (encodeOptions.pos) {
       case 'left':
       case 'right': {
         const yCount = Math.floor(imageData.height / gs);
@@ -97,7 +101,7 @@ export const encodeImageData = (
 
   // 該当エリアを塗りつぶす
   const filledImageData = resizedAreas.reduce((p, c) => {
-    return fillArea(p, c, areaSelectOptions, '#' + options.backgroundColor);
+    return fillArea(p, c, areaSelectOptions, '#' + encodeOptions.fillColor);
   }, imageData);
 
   // 隠蔽対象のエリア一覧(x,y,xグリッド数,yグリッド数)
@@ -107,28 +111,34 @@ export const encodeImageData = (
 
   // 出力画像のキャンバス
   const [resultCv, resultCx] =
-    options.clipPos === 'left' || options.clipPos === 'right'
+    encodeOptions.pos === 'left' || encodeOptions.pos === 'right'
       ? createCanvas(imageData.width + clippedCv.width, imageData.height)
       : createCanvas(imageData.width, imageData.height + clippedCv.height);
 
   // 本画像
-  const mainPosX = options.clipPos === 'left' ? clippedCv.width : 0;
-  const mainPosY = options.clipPos === 'top' ? clippedCv.height : 0;
+  const mainPosX = encodeOptions.pos === 'left' ? clippedCv.width : 0;
+  const mainPosY = encodeOptions.pos === 'top' ? clippedCv.height : 0;
 
   // 画面下に追加する色バイトコードのImageData作成
-  const clippedPosX = options.clipPos === 'right' ? imageData.width : 0;
-  const clippedPosY = options.clipPos === 'bottom' ? imageData.height : 0;
-  const colorByteCodeImageData = dataToColorByteCode(
-    { ...options, gridSize: gs },
-    gridAreas,
-    [clippedPosX, clippedPosY, clippedCv.width / gs, clippedCv.height / gs],
-    [mainPosX, mainPosY, imageData.width, imageData.height],
-    [resultCv.width, resultCv.height]
-  );
+  const clippedPosX = encodeOptions.pos === 'right' ? imageData.width : 0;
+  const clippedPosY = encodeOptions.pos === 'bottom' ? imageData.height : 0;
+  const colorByteCodeImageData = dataToColorByteCode({
+    encodeOptions,
+    gridSize: gs,
+    filledAreas: gridAreas,
+    clipArea: [
+      clippedPosX,
+      clippedPosY,
+      clippedCv.width / gs,
+      clippedCv.height / gs,
+    ],
+    mainArea: [mainPosX, mainPosY, imageData.width, imageData.height],
+    size: [resultCv.width, resultCv.height],
+  });
 
   // アプトプットの作成
   resultCv.height += colorByteCodeImageData.height;
-  resultCx.fillStyle = '#' + options.backgroundColor;
+  resultCx.fillStyle = '#' + encodeOptions.fillColor;
   resultCx.fillRect(0, 0, resultCv.width, resultCv.height);
   const [filledCv] = createCanvasFromImage(filledImageData);
   const [codeCv] = createCanvasFromImage(colorByteCodeImageData);
@@ -170,33 +180,33 @@ const shufflePixelGrooups = (
   options: EncodeOptions
 ): PixelGroup[] => {
   // ハッシュ
-  const hash = createHash(options.hashKey ?? DEFAULT_KEY);
+  const hash = createHash(options.withKey ? options.key : DEFAULT_KEY);
 
   let result = pixelGroups.map((v) => [...v]);
 
   // グループを並べ替え
-  if (!options.noSwap) {
+  if (options.doSwap) {
     result = sortByHash(result as [], hash);
   }
 
   // ハッシュで回転(90度ずつ),反転
-  if (!options.noRotate) {
+  if (options.doRotate) {
     result = rotateGroups(result, hash);
     result = flipGroups(result, hash);
   }
 
   // ハッシュ値で色反転
-  if (!options.noNega) {
+  if (options.doNega) {
     result = negaGroups(result, hash);
   }
 
   // 色シフト ()
-  if (options.shiftColor) {
-    result = lowContrastGroups(result, options.shiftColor.contrast);
+  if (options.doColorShift) {
+    result = lowContrastGroups(result, options.contrastLevel);
     result = shiftColorGroups(
       result,
-      options.shiftColor.contrast,
-      options.shiftColor.color
+      options.contrastLevel,
+      options.shiftColor
     );
   }
   return result;
@@ -241,7 +251,7 @@ export const convertRectAreaForGridSize = (
 const fillArea = (
   imageData: ImageData,
   area: RectArea,
-  options: typeof DEFAULT_AREA_SELECT_OPTION,
+  options: AreaSelectOptions,
   colorCode: string
 ) => {
   const [cv, cx] = createCanvasFromImage(imageData);
@@ -286,10 +296,8 @@ export const getGridPadding = (w: number, h: number) => {
  */
 export const decodeImageData = (
   imageData: ImageData,
-  decodeOptions: typeof DEFAULT_DECODE_OPTIONS
+  decodeOptions: DecodeOptions
 ) => {
-  const formOptions = formToDecodeOption(decodeOptions);
-
   const [cv, cx] = createCanvasFromImage(imageData);
 
   // 画像のカラーバイトコードを読む
@@ -297,11 +305,12 @@ export const decodeImageData = (
     encodeOptions: options,
     filledAreas,
     size,
+    gridSize,
     clippedArea,
     mainArea,
   } = colorByteCodeToData(imageData);
 
-  const gs = options.gridSize;
+  const gs = gridSize;
 
   const isFullsize = imageData.width === size[0];
 
@@ -332,10 +341,6 @@ export const decodeImageData = (
     gs
   );
 
-  if (formOptions?.hashKey) {
-    options.hashKey = formOptions.hashKey;
-  }
-
   // 末端あたりのゴミデータのぞく
   const filterdPixelGroups = clippedPixelGroups.splice(
     0,
@@ -347,7 +352,10 @@ export const decodeImageData = (
   // シャッフルされていたやつを戻す
   const unShuffledPixelGroups = unShufflePixelGroup(
     filterdPixelGroups,
-    options
+    {
+      ...options,
+    },
+    decodeOptions.key
   );
 
   const p = Number(decodeOptions.padding);
@@ -368,8 +376,8 @@ export const decodeImageData = (
 
     // 1ブロックずつ移す
     const [, rcx] = createCanvasFromImage(resizedImageData);
-    const sgsX = options.gridSize * scaleX;
-    const sgsY = options.gridSize * scaleY;
+    const sgsX = gridSize * scaleX;
+    const sgsY = gridSize * scaleY;
     for (let i = 0; i < v[3]; i++) {
       for (let j = 0; j < v[2]; j++) {
         cx.putImageData(
@@ -398,12 +406,9 @@ export const decodeImageData = (
         );
       }
     }
-
-    // グリッド境目の劣化を考えず、Paddingを無視して移す場合はこちら
-    // cx.putImageData(resizedImageData, v[0] * scale, v[1] * scale);
   });
 
-  if (formOptions && formOptions.crop) {
+  if (decodeOptions.doCrop) {
     if (isFullsize) {
       return cx.getImageData(
         mainArea[0],
@@ -433,58 +438,39 @@ export const decodeImageData = (
  */
 const unShufflePixelGroup = (
   pixelGroups: PixelGroup[],
-  options: EncodeOptions
+  options: RestoredEncodeOptions,
+  key?: string
 ): PixelGroup[] => {
   let result = pixelGroups.map((v) => [...v]);
 
   // ハッシュ作成
-  const hash = createHash(options.hashKey ?? DEFAULT_KEY);
+  const hash = createHash(key ? key : DEFAULT_KEY);
 
   // 色シフト
   if (options.shiftColor) {
     result = unShiftColorGroups(
       result,
-      options.shiftColor.contrast,
-      options.shiftColor.color
+      options.contrastLevel,
+      options.shiftColor
     );
-    result = restoreLowContrastGroups(result, options.shiftColor.contrast);
+    result = restoreLowContrastGroups(result, options.contrastLevel);
   }
 
   // ハッシュ値で色反転
-  if (!options.noNega) {
+  if (options.doNega) {
     result = negaGroups(result, hash);
   }
 
   // ハッシュで回転(90度ずつ),反転
-  if (!options.noRotate) {
+  if (options.doRotate) {
     result = flipGroups(result, hash);
     result = rerotateGroups(result, hash);
   }
 
   // グループを並べ替え
-  if (!options.noSwap) {
+  if (options.doSwap) {
     result = resortByHash(result, hash);
   }
 
   return result;
 };
-
-const formToEncodeOption = (e: typeof DEFAULT_ENCODE_OPTIONS) => ({
-  noSwap: !e.doSwap,
-  noNega: !e.doNega,
-  noRotate: !e.doRotate,
-  hashKey: e.withKey && e.key ? e.key : undefined,
-  clipPos: e.pos,
-  backgroundColor: e.fillColor,
-  shiftColor: e.doColorShift
-    ? {
-        contrast: e.contrastLevel,
-        color: e.shiftColor,
-      }
-    : undefined,
-});
-
-const formToDecodeOption = (e: typeof DEFAULT_DECODE_OPTIONS) => ({
-  crop: e.doCrop,
-  hashKey: e.key,
-});

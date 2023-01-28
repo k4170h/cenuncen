@@ -15,12 +15,13 @@ import WidthFullSharpIcon from '@mui/icons-material/WidthFullSharp';
 import WidthNormalSharpIcon from '@mui/icons-material/WidthNormalSharp';
 import ControlledSwitch from '../atoms/ControlledSwitch';
 import { FormLi, FormUl } from '../atoms/FormList';
+import { AreaSelectOptions } from '../../utils/types';
 
 type Props = {
   disabled: boolean;
   imageSize: [number, number];
-  onChange: (v: typeof DEFAULT_AREA_SELECT_OPTION) => void;
-  areaSelectOptions: typeof DEFAULT_AREA_SELECT_OPTION;
+  onChange: (v: AreaSelectOptions) => void;
+  areaSelectOptions: AreaSelectOptions;
 };
 
 const AreaSelectForm = ({
@@ -35,9 +36,7 @@ const AreaSelectForm = ({
   const [minSpacing, setMinSpacing] = useState(
     DEFAULT_AREA_SELECT_OPTION.spacing
   );
-  const { control, watch, setValue } = useForm<
-    typeof DEFAULT_AREA_SELECT_OPTION
-  >({
+  const { control, watch, setValue } = useForm<AreaSelectOptions>({
     defaultValues: { ...areaSelectOptions },
     mode: 'onChange',
   });

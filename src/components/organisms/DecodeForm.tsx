@@ -6,15 +6,16 @@ import { DEFAULT_DECODE_OPTIONS } from '../../utils/definition';
 import ControlledSwitch from '../atoms/ControlledSwitch';
 import ControlledSlider from '../atoms/ControlledSlider';
 import { FormLi, FormUl } from '../atoms/FormList';
+import { DecodeOptions } from '../../utils/types';
 
 type Props = {
-  onChange?: (v: typeof DEFAULT_DECODE_OPTIONS) => void;
-  decodeOptions?: typeof DEFAULT_DECODE_OPTIONS;
+  onChange?: (v: DecodeOptions) => void;
+  decodeOptions?: DecodeOptions;
   disabled?: boolean;
 };
 
 const DecodeForm = ({ onChange, decodeOptions, disabled }: Props) => {
-  const { control, watch } = useForm<typeof DEFAULT_DECODE_OPTIONS>({
+  const { control, watch } = useForm<DecodeOptions>({
     defaultValues: decodeOptions,
     mode: 'onChange',
   });

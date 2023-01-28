@@ -24,7 +24,17 @@ import {
   resizeImageData,
 } from '../../utils/canvasUtils';
 import TrialDecodeForm from '../organisms/TrialDecodeForm';
-import { RectArea } from '../../utils/types';
+import {
+  DecodeOptions,
+  EncodeMode,
+  EncodeOptions,
+  Page,
+  RectArea,
+  TrialDecodeOptions,
+} from '../../utils/types';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import PendingBox from '../atoms/PendingBox';
 
 const ToolBox = styled(Box)({
   position: 'fixed',
@@ -39,16 +49,26 @@ const ToolBox = styled(Box)({
   overflowY: 'auto',
 });
 
-const Encoder = () => {
-  const [page, setPage] = useState<'encode' | 'decode'>('encode');
-  const [mode, setMode] = useState<'areaSelect' | 'encodeSetting'>(
-    'areaSelect'
-  );
+const SlidableToolBox = styled(ToolBox)({
+  transition: 'right ease-out .2s',
+  '&.hide': {
+    right: '-300px',
+  },
+});
+
+type Props = {
+  page: Page;
+};
+
+const Encoder = ({ page: defaultPage }: Props) => {
+  const [page, setPage] = useState<Page>(defaultPage);
+  const [mode, setMode] = useState<EncodeMode>('areaSelect');
   const panningRef = useRef<{
     moveToCenter: () => void;
     resetZoom: () => void;
     fitImage: () => void;
   }>();
+  const [pending, setPending] = useState(false);
   const [imageDataToEncode, setImageDataToEncode] = useState<ImageData>();
   const [encodedImageData, setEncodedImageData] = useState<ImageData>();
   const [imageDataToDecode, setImageDataToDecode] = useState<ImageData>();
@@ -65,8 +85,8 @@ const Encoder = () => {
   const [tryDecoded, setTryDecoded] = useState(false);
 
   const encode = useCallback(
-    (v?: {
-      encodeOptions?: typeof DEFAULT_ENCODE_OPTIONS;
+    async (v?: {
+      encodeOptions?: EncodeOptions;
       imageDataToEncode?: ImageData;
     }) => {
       const {
@@ -89,13 +109,21 @@ const Encoder = () => {
         return;
       }
 
-      const encodedImageData_ = encodeImageData(
-        imageData,
-        selectedAreas,
-        options,
-        areaSelectOptions
-      );
-      setEncodedImageData(encodedImageData_);
+      setPending(true);
+      await new Promise<void>((resolve) => {
+        setTimeout(() => {
+          setEncodedImageData(
+            encodeImageData(
+              imageData,
+              selectedAreas,
+              options,
+              areaSelectOptions
+            )
+          );
+          resolve();
+        }, 1);
+      });
+      setPending(false);
     },
     [
       areaSelectOptions,
@@ -107,8 +135,8 @@ const Encoder = () => {
   );
 
   const decode = useCallback(
-    (v?: {
-      decodeOptions?: typeof DEFAULT_DECODE_OPTIONS;
+    async (v?: {
+      decodeOptions?: DecodeOptions;
       imageDataToDecode?: ImageData;
     }) => {
       const {
@@ -131,19 +159,23 @@ const Encoder = () => {
         return;
       }
 
-      try {
-        const decodedImageData_ = decodeImageData(imageData, options);
-        setDecodedImageData(decodedImageData_);
-      } catch (e) {
+      setPending(true);
+      await new Promise<void>((resolve) => {
+        setTimeout(() => {
+          setDecodedImageData(decodeImageData(imageData, options));
+          resolve();
+        }, 1);
+      }).catch((e) => {
         alert('failed to decode');
         console.error(e);
-      }
+      });
+      setPending(false);
     },
     [imageDataToDecode, setDecodedImageData, decodeOptions]
   );
 
   const decodeFromEncodedImage = useCallback(
-    (options: typeof DEFAULT_TRIAL_DECODE_OPTIONS) => {
+    (options: TrialDecodeOptions) => {
       if (!encodedImageData) {
         console.error('invalid encoded ImageData');
         return;
@@ -154,24 +186,31 @@ const Encoder = () => {
         encodedImageData,
         (encodedImageData.width * options.scale) / 100
       );
+      let imagedataPromise: Promise<ImageData>;
       if (options.isJPG) {
         const [cv] = createCanvasFromImage(resizedImageData);
         const imageStr = cv.toDataURL('image/jpeg', 0.9);
-        const img = new Image();
-        img.onload = () => {
-          const [cv, cx] = createCanvasFromImage(img);
-          decode({
-            imageDataToDecode: cx.getImageData(0, 0, cv.width, cv.height),
-          });
-          setImageDataToDecode(cx.getImageData(0, 0, cv.width, cv.height));
-        };
-        img.src = imageStr;
+        imagedataPromise = new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            const [cv, cx] = createCanvasFromImage(img);
+            resolve(cx.getImageData(0, 0, cv.width, cv.height));
+          };
+          img.src = imageStr;
+        });
       } else {
-        decode({ imageDataToDecode: resizedImageData });
-        setImageDataToDecode(resizedImageData);
+        imagedataPromise = Promise.resolve(resizedImageData);
       }
-      setPage('decode');
+
       setTryDecoded(true);
+      imagedataPromise
+        .then((imageData) => {
+          setImageDataToDecode(imageData);
+          return decode({ imageDataToDecode: imageData });
+        })
+        .then(() => {
+          setPage('decode');
+        });
     },
     [decode, encodedImageData, setImageDataToDecode]
   );
@@ -248,100 +287,101 @@ const Encoder = () => {
         )}
       </PanningWrapper>
       <ToolBox>
-        {page === 'encode' && mode === 'areaSelect' && (
-          <Stack spacing={4} mb={4}>
-            <SmallImageLoader onImageLoaded={handleChangeImageToEncode} />
-            <Divider />
-            <AreaSelectForm
-              disabled={!imageDataToEncode}
-              imageSize={[
-                imageDataToEncode?.width ?? 0,
-                imageDataToEncode?.height ?? 0,
-              ]}
-              onChange={(v) => {
-                setAreaSelectOptions(v);
-              }}
-              areaSelectOptions={areaSelectOptions}
-            />
-            <Divider />
-            <SelectedAreaList
-              selectedAreas={selectedAreas}
-              onUpdateList={(v) => {
-                setSelectedAreas(v);
-              }}
-            />
-            <Divider />
-            <Button
-              disabled={!selectedAreas.length}
-              onClick={() => {
+        <Stack spacing={4} mb={4}>
+          <SmallImageLoader onImageLoaded={handleChangeImageToEncode} />
+          <Divider />
+          <AreaSelectForm
+            disabled={!imageDataToEncode}
+            imageSize={[
+              imageDataToEncode?.width ?? 0,
+              imageDataToEncode?.height ?? 0,
+            ]}
+            onChange={(v) => {
+              setAreaSelectOptions(v);
+            }}
+            areaSelectOptions={areaSelectOptions}
+          />
+          <Divider />
+          <SelectedAreaList
+            selectedAreas={selectedAreas}
+            onUpdateList={(v) => {
+              setSelectedAreas(v);
+            }}
+          />
+          <Divider />
+          <Button
+            disabled={!selectedAreas.length}
+            onClick={() => {
+              encode().then(() => {
                 setMode('encodeSetting');
-                encode();
-              }}
-              variant="contained"
-            >
-              Encode
+              });
+            }}
+            variant="contained"
+          >
+            Encode
+            <NavigateNextIcon />
+          </Button>
+        </Stack>
+      </ToolBox>
+      <SlidableToolBox className={mode !== 'encodeSetting' ? 'hide' : ''}>
+        <>
+          <Stack mb={2}>
+            <Button variant="contained" onClick={switchToAreaSelect}>
+              <NavigateBeforeIcon />
+              Back
             </Button>
           </Stack>
-        )}
-        {page === 'encode' && mode === 'encodeSetting' && (
-          <>
+          <Divider />
+          <EncodeForm
+            onChange={(v) => {
+              encode({ encodeOptions: v }).then();
+              setEncodeOptions(v);
+            }}
+            encodeOptions={encodeOptions}
+          />
+          <SaveButtons {...{ imageData: encodedImageData }} />
+          <Divider />
+          <Stack mb={2} mt={4} spacing={2}>
+            {encodedImageData && (
+              <TrialDecodeForm
+                onChange={(v) => {
+                  setTrialDecodeOptions(v);
+                }}
+                trialDecodeOptions={trialDecodeOptions}
+                imageSize={[encodedImageData.width, encodedImageData.height]}
+                onSubmit={() => decodeFromEncodedImage(trialDecodeOptions)}
+              />
+            )}
+          </Stack>
+        </>
+      </SlidableToolBox>
+      <SlidableToolBox className={page !== 'decode' ? 'hide' : ''}>
+        <>
+          {tryDecoded && (
             <Stack mb={2}>
-              <Button variant="contained" onClick={switchToAreaSelect}>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setPage('encode');
+                }}
+              >
                 Back
               </Button>
             </Stack>
-            <Divider />
-            <EncodeForm
-              onChange={(v) => {
-                encode({ encodeOptions: v });
-                setEncodeOptions(v);
-              }}
-              encodeOptions={encodeOptions}
-            />
-            <SaveButtons {...{ imageData: encodedImageData }} />
-            <Divider />
-            <Stack mb={2} mt={4} spacing={2}>
-              {encodedImageData && (
-                <TrialDecodeForm
-                  onChange={(v) => {
-                    setTrialDecodeOptions(v);
-                  }}
-                  trialDecodeOptions={trialDecodeOptions}
-                  imageSize={[encodedImageData.width, encodedImageData.height]}
-                  onSubmit={() => decodeFromEncodedImage(trialDecodeOptions)}
-                  expanded={tryDecoded}
-                />
-              )}
-            </Stack>
-          </>
-        )}
-        {page === 'decode' && (
-          <>
-            {tryDecoded && (
-              <Stack mb={2}>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    setPage('encode');
-                  }}
-                >
-                  Back
-                </Button>
-              </Stack>
-            )}
-            <SmallImageLoader onImageLoaded={handleChangeImageToDecode} />
-            <DecodeForm
-              onChange={(v) => {
-                decode({ decodeOptions: v });
-                setDecodeOptions(v);
-              }}
-              decodeOptions={decodeOptions}
-              disabled={!decodedImageData}
-            />
-            <SaveButtons {...{ imageData: decodedImageData }} />
-          </>
-        )}
-      </ToolBox>
+          )}
+          <SmallImageLoader onImageLoaded={handleChangeImageToDecode} />
+          <DecodeForm
+            onChange={(v) => {
+              decode({ decodeOptions: v });
+              setDecodeOptions(v);
+            }}
+            decodeOptions={decodeOptions}
+            disabled={!decodedImageData}
+          />
+          <SaveButtons {...{ imageData: decodedImageData }} />
+        </>
+      </SlidableToolBox>
+      <PendingBox show={pending} />
     </>
   );
 };

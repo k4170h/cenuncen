@@ -27,7 +27,7 @@ const ClipboardImageLoader = ({ onImageLoaded, children }: Props) => {
           };
         });
       } catch (e) {
-        alert('load image Failed:' + e);
+        alert('Failed to load :' + e);
         console.error(e);
       }
     });

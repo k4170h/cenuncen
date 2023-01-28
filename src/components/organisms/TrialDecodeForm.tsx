@@ -12,11 +12,13 @@ import {
   FlatAccordionSummary,
 } from '../atoms/FlatAccordion';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { TrialDecodeOptions } from '../../utils/types';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
 type Props = {
-  onChange?: (v: typeof DEFAULT_TRIAL_DECODE_OPTIONS) => void;
-  onSubmit?: (v: typeof DEFAULT_TRIAL_DECODE_OPTIONS) => void;
-  trialDecodeOptions?: typeof DEFAULT_TRIAL_DECODE_OPTIONS;
+  onChange?: (v: TrialDecodeOptions) => void;
+  onSubmit?: (v: TrialDecodeOptions) => void;
+  trialDecodeOptions?: TrialDecodeOptions;
   disabled?: boolean;
   imageSize: [number, number];
   expanded?: boolean;
@@ -30,9 +32,7 @@ const TrialDecodeForm = ({
   onSubmit,
   expanded,
 }: Props) => {
-  const { control, watch, handleSubmit } = useForm<
-    typeof DEFAULT_TRIAL_DECODE_OPTIONS
-  >({
+  const { control, watch, handleSubmit } = useForm<TrialDecodeOptions>({
     defaultValues: trialDecodeOptions,
     mode: 'onChange',
   });
@@ -88,9 +88,12 @@ const TrialDecodeForm = ({
               </Stack>
             </FormLi>
           </FormUl>
-          <Button type="submit" variant="contained" disabled={disabled}>
-            Decode
-          </Button>
+          <Stack>
+            <Button type="submit" variant="contained" disabled={disabled}>
+              Decode
+              <NavigateNextIcon />
+            </Button>
+          </Stack>
         </form>
       </FlatAccordionDetails>
     </FlatAccordion>

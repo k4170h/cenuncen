@@ -52,7 +52,7 @@ export const DEFAULT_ENCODE_OPTIONS = {
   doRotate: true,
   doNega: true,
   doColorShift: false,
-  contrastLevel: 0.9,
+  contrastLevel: 0.5,
   shiftColor: '888888',
   withKey: false,
   key: '',
