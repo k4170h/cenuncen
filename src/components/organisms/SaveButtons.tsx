@@ -80,7 +80,7 @@ const SaveButtons = ({ imageData }: Props) => {
         <Button
           variant="contained"
           size="small"
-          onClick={() => saveToFile('jpg')}
+          onClick={() => saveToFile('png')}
           disabled={disabled}
         >
           <SaveAltIcon sx={{ mb: 1 }} />
