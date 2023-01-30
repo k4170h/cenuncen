@@ -24,8 +24,8 @@ chrome.runtime.onMessage.addListener((message, sender, callback) => {
 
 const replaceImage = async (src: string, dataURI: string) => {
   if (!dataURI) {
-    // 一部の画像サーバが403になるので、content_script でも画像を読む
-    // 画像単体を表示していれば成功するかも
+    // ログイン必須系サービスの画像が403になるので、content_script でも画像を読む
+    // 画像単体を表示していれば成功する
     const res = await fetch(src).catch((e) => {
       throw e;
     });

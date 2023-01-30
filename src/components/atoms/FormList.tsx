@@ -9,7 +9,7 @@ const Ul = styled('ul')({
 const Li = styled('li')({
   listStyle: 'none',
   margin: 0,
-  padding: '15px 20px 15px 40px',
+  padding: '15px 0px 15px 20px',
   borderBottom: '1px solid rgba(244, 244, 244, 1)',
 });
 

@@ -1,21 +1,16 @@
-import { Stack } from '@mui/material';
-import React, { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useEffect, useState } from 'react';
+import { DeepRequired, useForm } from 'react-hook-form';
 import {
   DEFAULT_AREA_SELECT_OPTION,
   MIN_PIXEL_BLOCK_WIDTH,
   MIN_PIXEL_GROUP_PADDING,
   MIN_RESIZED_IMAGE_WIDTH,
 } from '../../utils/definition';
-import ControlledSlider from '../atoms/ControlledSlider';
-import GridViewSharpIcon from '@mui/icons-material/GridViewSharp';
-import AppsIcon from '@mui/icons-material/Apps';
-import FormTitle from '../atoms/FormTitle';
-import WidthFullSharpIcon from '@mui/icons-material/WidthFullSharp';
-import WidthNormalSharpIcon from '@mui/icons-material/WidthNormalSharp';
-import ControlledSwitch from '../atoms/ControlledSwitch';
+import SectionTitle from '../atoms/SectionTitle';
 import { FormLi, FormUl } from '../atoms/FormList';
 import { AreaSelectOptions } from '../../utils/types';
+import InputRange from '../atoms/InputRange';
+import InputChackbox from '../atoms/InputCheckbox';
 
 type Props = {
   disabled: boolean;
@@ -36,24 +31,21 @@ const AreaSelectForm = ({
   const [minSpacing, setMinSpacing] = useState(
     DEFAULT_AREA_SELECT_OPTION.spacing
   );
-  const { control, watch, setValue } = useForm<AreaSelectOptions>({
+  const { watch, setValue, register } = useForm<AreaSelectOptions>({
     defaultValues: { ...areaSelectOptions },
     mode: 'onChange',
   });
 
-  const lastFormValue = useRef('');
-
-  const watchForm = watch();
   const gridSize = watch('gridSize');
   const spacing = watch('spacing');
 
+  // Form内容更新時の処理
   useEffect(() => {
-    const watchFormStr = JSON.stringify(watchForm);
-    if (lastFormValue.current !== watchFormStr) {
-      lastFormValue.current = watchFormStr;
-      onChange(watchForm);
-    }
-  }, [watchForm, onChange]);
+    const subscription = watch((values) => {
+      onChange(values as DeepRequired<AreaSelectOptions>);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, onChange]);
 
   // グリッド最小幅を算出
   useEffect(() => {
@@ -89,43 +81,39 @@ const AreaSelectForm = ({
 
   return (
     <>
-      <FormTitle>Area Select Option</FormTitle>
+      <SectionTitle>Area Select Option</SectionTitle>
       <FormUl>
         <FormLi>
-          <Stack>
-            <ControlledSlider
-              control={control}
-              name="gridSize"
-              min={minGridSize}
-              max={minGridSize + 40}
-              step={8}
-              right={<GridViewSharpIcon />}
-              left={<AppsIcon />}
-              disabled={disabled}
-              label="Block size"
-            />
-          </Stack>
-        </FormLi>
-        <FormLi>
-          <Stack>
-            <ControlledSlider
-              control={control}
-              name="spacing"
-              min={minSpacing}
-              max={minSpacing + 5}
-              step={1}
-              right={<WidthFullSharpIcon />}
-              left={<WidthNormalSharpIcon />}
-              disabled={disabled}
-              label="Spacing"
-            />
-          </Stack>
-        </FormLi>
-        <FormLi>
-          <ControlledSwitch
-            control={control}
-            name="withColor"
+          <InputRange
+            register={register}
             disabled={disabled}
+            name="gridSize"
+            label="gridSize"
+            min={minGridSize}
+            max={minGridSize + 40}
+            step={8}
+            left={minGridSize}
+            right={minGridSize + 40}
+          />
+        </FormLi>
+        <FormLi>
+          <InputRange
+            register={register}
+            disabled={disabled}
+            name="spacing"
+            label="spacing"
+            min={minSpacing}
+            max={minSpacing + 5}
+            step={1}
+            left={minSpacing}
+            right={minSpacing + 5}
+          />
+        </FormLi>
+        <FormLi>
+          <InputChackbox
+            register={register}
+            disabled={disabled}
+            name="withColor"
             label="Coloring"
           />
         </FormLi>

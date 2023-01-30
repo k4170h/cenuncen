@@ -1,7 +1,7 @@
 {
-  "name": "chrome-extension-typescript-starter",
+  "name": "uncen",
   "version": "1.0.0",
-  "description": "chrome-extension-typescript-starter",
+  "description": "uncen",
   "main": "index.js",
   "scripts": {
     "watch": "webpack --config webpack/webpack.dev.js --watch",
@@ -11,11 +11,11 @@
     "test": "npx jest",
     "style": "prettier --write \"src/**/*.{ts,tsx}\""
   },
-  "author": "",
+  "author": "k4170h",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chibat/chrome-extension-typescript-starter.git"
+    "url": "https://github.com/k4170h/make-my-art-uncen"
   },
   "dependencies": {
     "@emotion/react": "^11.10.4",
@@ -24,9 +24,7 @@
     "@mui/icons-material": "^5.10.6",
     "@mui/material": "^5.10.6",
     "buffer": "^6.0.3",
-    "i": "^0.3.7",
     "jssha": "^3.2.0",
-    "npm": "^9.3.1",
     "query-string": "^8.1.0",
     "react": "^17.0.1",
     "react-colorful": "^5.6.1",

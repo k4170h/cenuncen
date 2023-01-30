@@ -1,19 +1,14 @@
-import { Button, Stack, Typography } from '@mui/material';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { DEFAULT_TRIAL_DECODE_OPTIONS } from '../../utils/definition';
-import ControlledSwitch from '../atoms/ControlledSwitch';
-import ControlledSlider from '../atoms/ControlledSlider';
-import FormTitle from '../atoms/FormTitle';
+import SectionTitle from '../atoms/SectionTitle';
 import { FormLi, FormUl } from '../atoms/FormList';
-import {
-  FlatAccordion,
-  FlatAccordionDetails,
-  FlatAccordionSummary,
-} from '../atoms/FlatAccordion';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { FlatAccordion } from '../atoms/FlatAccordion';
 import { TrialDecodeOptions } from '../../utils/types';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import CenteringBox from '../atoms/CenteringBox';
+import Button from '../atoms/Button';
+import InputCheckbox from '../atoms/InputCheckbox';
+import InputRange from '../atoms/InputRange';
 
 type Props = {
   onChange?: (v: TrialDecodeOptions) => void;
@@ -32,13 +27,14 @@ const TrialDecodeForm = ({
   onSubmit,
   expanded,
 }: Props) => {
-  const { control, watch, handleSubmit } = useForm<TrialDecodeOptions>({
+  const { register, watch, handleSubmit } = useForm<TrialDecodeOptions>({
     defaultValues: trialDecodeOptions,
     mode: 'onChange',
   });
   const watchForm = watch();
   const scale = watch('scale');
   const lastFormValue = useRef(JSON.stringify(DEFAULT_TRIAL_DECODE_OPTIONS));
+  const [display, setDisplay] = useState(false);
 
   useEffect(() => {
     const watchFormStr = JSON.stringify(watchForm);
@@ -49,54 +45,49 @@ const TrialDecodeForm = ({
   }, [onChange, watchForm]);
 
   return (
-    <FlatAccordion defaultExpanded={expanded}>
-      <FlatAccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <FormTitle>Try Decode</FormTitle>
-      </FlatAccordionSummary>
-      <FlatAccordionDetails>
-        <form onSubmit={handleSubmit(onSubmit ?? (() => null))}>
-          <FormUl>
-            <FormLi>
-              <ControlledSwitch
-                control={control}
-                name="isJPG"
-                label={<>Convert to JPG</>}
+    <>
+      <SectionTitle>
+        <div
+          onClick={() => {
+            setDisplay(!display);
+          }}
+        >
+          Try Decode
+        </div>
+      </SectionTitle>
+      <form onSubmit={handleSubmit(onSubmit ?? (() => null))}>
+        <FormUl>
+          <FormLi>
+            <InputCheckbox
+              register={register}
+              name="isJPG"
+              label={<>Convert to JPG</>}
+              disabled={disabled}
+            />
+          </FormLi>
+          <FormLi>
+            <div>
+              Resize
+              <InputRange
+                register={register}
+                name={'scale'}
+                max={100}
+                min={1}
+                step={1}
                 disabled={disabled}
               />
-            </FormLi>
-            <FormLi>
-              <Stack spacing={-1}>
-                Resize
-                <ControlledSlider
-                  control={control}
-                  name={'scale'}
-                  max={100}
-                  min={1}
-                  step={1}
-                  disabled={disabled}
-                  valueLabelFormat={(v) => `${v}%`}
-                />
-                <Stack direction={'row'} spacing={2} justifyContent="center">
-                  <Typography>
-                    {Math.round((imageSize[0] * scale) / 100)}
-                  </Typography>
-                  <Typography>X</Typography>
-                  <Typography>
-                    {Math.round((imageSize[1] * scale) / 100)}
-                  </Typography>
-                </Stack>
-              </Stack>
-            </FormLi>
-          </FormUl>
-          <Stack>
-            <Button type="submit" variant="contained" disabled={disabled}>
-              Decode
-              <NavigateNextIcon />
-            </Button>
-          </Stack>
-        </form>
-      </FlatAccordionDetails>
-    </FlatAccordion>
+              <CenteringBox>
+                {Math.round((imageSize[0] * scale) / 100)}X
+                {Math.round((imageSize[1] * scale) / 100)}
+              </CenteringBox>
+            </div>
+          </FormLi>
+        </FormUl>
+        <Button type="submit" disabled={disabled}>
+          <>Decode &gt;</>
+        </Button>
+      </form>
+    </>
   );
 };
 

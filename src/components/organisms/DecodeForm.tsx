@@ -1,56 +1,48 @@
-import { Stack } from '@mui/material';
 import React, { useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import ControlledTextarea from '../atoms/ControlledTextarea';
+import { DeepRequired, useForm } from 'react-hook-form';
 import { DEFAULT_DECODE_OPTIONS } from '../../utils/definition';
-import ControlledSwitch from '../atoms/ControlledSwitch';
-import ControlledSlider from '../atoms/ControlledSlider';
 import { FormLi, FormUl } from '../atoms/FormList';
 import { DecodeOptions } from '../../utils/types';
+import InputCheckbox from '../atoms/InputCheckbox';
+import InputRange from '../atoms/InputRange';
+import InputText from '../atoms/InputText';
+import SectionTitle from '../atoms/SectionTitle';
 
 type Props = {
-  onChange?: (v: DecodeOptions) => void;
+  onChange: (v: DecodeOptions) => void;
   decodeOptions?: DecodeOptions;
   disabled?: boolean;
 };
 
 const DecodeForm = ({ onChange, decodeOptions, disabled }: Props) => {
-  const { control, watch } = useForm<DecodeOptions>({
+  const { register, watch } = useForm<DecodeOptions>({
     defaultValues: decodeOptions,
     mode: 'onChange',
   });
-  const watchForm = watch();
-  const lastFormValue = useRef(JSON.stringify(DEFAULT_DECODE_OPTIONS));
 
+  // Form内容更新時の処理
   useEffect(() => {
-    const watchFormStr = JSON.stringify(watchForm);
-    if (lastFormValue.current !== watchFormStr) {
-      lastFormValue.current = watchFormStr;
-      onChange && onChange(watchForm);
-    }
-  }, [onChange, watchForm]);
+    const subscription = watch((values) => {
+      onChange(values as DeepRequired<DecodeOptions>);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, onChange]);
 
   return (
-    <FormUl>
-      <FormLi>
-        <ControlledSwitch
-          control={control}
-          name="doCrop"
-          label={<>clip</>}
-          disabled={disabled}
-        />
-      </FormLi>
-      <FormLi>
-        {/* <ControlledTextarea
-          control={control}
-          name="padding"
-          label={<>padding</>}
-          disabled={disabled}
-          type="number"
-        /> */}
-        <Stack>
-          <ControlledSlider
-            control={control}
+    <>
+      <SectionTitle>Decode Option</SectionTitle>
+      <FormUl>
+        <FormLi>
+          <InputCheckbox
+            register={register}
+            name="doCrop"
+            label="clip"
+            disabled={disabled}
+          />
+        </FormLi>
+        <FormLi>
+          <InputRange
+            register={register}
             name="padding"
             min={0}
             max={6}
@@ -58,38 +50,36 @@ const DecodeForm = ({ onChange, decodeOptions, disabled }: Props) => {
             disabled={disabled}
             label="Padding"
           />
-          <ControlledSlider
-            control={control}
+          <InputRange
+            register={register}
             name="offsetX"
             min={-3}
             max={3}
             step={1}
             disabled={disabled}
-            label="Offset"
-            left="X"
+            label="Offset X"
           />
-          <ControlledSlider
-            control={control}
+          <InputRange
+            register={register}
             name="offsetY"
             min={-3}
             max={3}
             step={1}
             disabled={disabled}
-            left="Y"
+            label="Offset Y"
           />
-        </Stack>
-      </FormLi>
-      <FormLi>
-        <ControlledTextarea
-          control={control}
-          name="key"
-          label="key"
-          type="text"
-          width="5em"
-          disabled={disabled}
-        />
-      </FormLi>
-    </FormUl>
+        </FormLi>
+        <FormLi>
+          <InputText
+            register={register}
+            name="key"
+            label="key"
+            width="5em"
+            disabled={disabled}
+          />
+        </FormLi>
+      </FormUl>
+    </>
   );
 };
 

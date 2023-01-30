@@ -180,7 +180,9 @@ const shufflePixelGrooups = (
   options: EncodeOptions
 ): PixelGroup[] => {
   // ハッシュ
-  const hash = createHash(options.withKey ? options.key : DEFAULT_KEY);
+  const hash = createHash(
+    options.withKey && options.key ? options.key : DEFAULT_KEY
+  );
 
   let result = pixelGroups.map((v) => [...v]);
 

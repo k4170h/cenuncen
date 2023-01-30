@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" >
+  <rect x="15" y="15" width="70" height="70" stroke="#0003" fill="transparent" stroke-width="2" stroke-dasharray="5"/>
+      <path stroke="transparent" fill="#0003" d="
+        M85,85
+        v7
+        l2,-2
+        l5 5
+        l3,-3
+        l-5,-5
+        l2,-2
+        h-7z
+        "/>
+</svg>

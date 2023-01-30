@@ -4,15 +4,16 @@ import { ReactNode } from 'react';
 
 const StyledBox = styled('div')({
   display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
+  flexWrap: 'nowrap',
+  width: '100%',
+  gap: '8px',
 });
 
 type Props = {
   children: ReactNode;
 };
-const CenteringBox = ({ children }: Props) => {
+const FlexRow = ({ children }: Props) => {
   return <StyledBox>{children}</StyledBox>;
 };
 
-export default CenteringBox;
+export default FlexRow;

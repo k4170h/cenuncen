@@ -1,6 +1,6 @@
-import React, { ReactNode, useCallback, useState } from 'react';
-import { Button } from '@mui/material';
+import React, { ReactNode, useCallback } from 'react';
 import { createCanvasFromImage } from '../../utils/canvasUtils';
+import Button from '../atoms/Button';
 
 type Props = {
   onImageLoaded: (imageData: ImageData) => void;
@@ -34,9 +34,7 @@ const ClipboardImageLoader = ({ onImageLoaded, children }: Props) => {
   }, [onImageLoaded]);
 
   return (
-    <Button variant="contained" onClick={loadFromClipboard}>
-      {children ?? 'READ CLIPBOARD'}
-    </Button>
+    <Button onClick={loadFromClipboard}>{children ?? 'READ CLIPBOARD'}</Button>
   );
 };
 
