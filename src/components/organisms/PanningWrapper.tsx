@@ -1,6 +1,4 @@
 import styled from '@emotion/styled';
-import { Box, Button, IconButton } from '@mui/material';
-import { Stack } from '@mui/system';
 import React, {
   createContext,
   forwardRef,
@@ -20,26 +18,42 @@ const MAX_ZOOM = 200;
  * 子要素をズームしたりパンしたりするコンポーネント
  */
 
-const Base = styled(Box)({
+const Base = styled('div')({
   boxShadow: 'inset 0 1px 3px 0px rgba(0,0,0,.2)',
   overflow: 'hidden',
   width: 'calc(100% - 300px)',
   height: '100%',
   position: 'relative',
+  backgroundImage: 'url(areaSelect.svg)',
+  backgroundRepeat: 'no-repeat',
+  backgroundSize: '30%',
+  backgroundPosition: '50% 50%',
 });
 
-const TargetPan = styled(Box)({
+const TargetPan = styled('div')({
   position: 'absolute',
   top: 0,
   left: 0,
 });
-const TargetZoom = styled(Box)({});
+const TargetZoom = styled('div')({});
 
-const ButtonWrapper = styled(Stack)({
+const ButtonWrapper = styled('div')({
   position: 'absolute',
   bottom: 0,
   left: 0,
   zIndex: 100,
+  color: '#0006',
+});
+
+const StyledButton = styled('button')({
+  border: 'none',
+  backgroundColor: 'transparent',
+  cursor: 'pointer',
+  fontSize: '1em',
+  color: '#0006',
+  '&:hover': {
+    color: '#000',
+  },
 });
 
 // 子要素に情報を与える用
@@ -74,8 +88,8 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
   // const [lastTargetSize, setLastTargetSize] = useState([0, 0]);
 
   const [mouseMovedTargetPos, setMouseMovedTargetPos] = useState([0, 0]);
-  const baseRef = useRef<HTMLDivElement>();
-  const targetRef = useRef<HTMLDivElement>();
+  const baseRef = useRef<HTMLDivElement>(null);
+  const targetRef = useRef<HTMLDivElement>(null);
   const lastTargetSize = useRef([0, 0]);
 
   // Zoom は 整数の% で扱う。小数点だと誤差出る
@@ -126,6 +140,13 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (
+        !targetRef.current ||
+        !targetRef.current.childNodes[0].hasChildNodes()
+      ) {
+        return;
+      }
+
       if (!mouseDown) {
         return;
       }
@@ -140,6 +161,12 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
 
   const handleMouseUp = useCallback(
     (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (
+        !targetRef.current ||
+        !targetRef.current.childNodes[0].hasChildNodes()
+      ) {
+        return;
+      }
       setMouseDown(false);
     },
     []
@@ -199,7 +226,7 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
     }
   }, []);
 
-  // Targetのサイズが変わったらその位置で中央寄せ
+  // Targetのサイズが変わったら中央寄せ
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
       if (
@@ -218,15 +245,17 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
         return;
       }
 
-      const currentPos = [
-        targetRef.current.offsetLeft,
-        targetRef.current.offsetTop,
-      ];
+      // その位置で中央寄せ
+      // const currentPos = [
+      //   targetRef.current.offsetLeft,
+      //   targetRef.current.offsetTop,
+      // ];
+      // setTargetPos([
+      //   currentPos[0] + (lastTargetSize.current[0] - currentSize[0]) / 2,
+      //   currentPos[1] + (lastTargetSize.current[1] - currentSize[1]) / 2,
+      // ]);
 
-      setTargetPos([
-        currentPos[0] + (lastTargetSize.current[0] - currentSize[0]) / 2,
-        currentPos[1] + (lastTargetSize.current[1] - currentSize[1]) / 2,
-      ]);
+      fitImage();
 
       lastTargetSize.current = [
         targetRef.current.clientWidth,
@@ -265,11 +294,10 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
-        <ButtonWrapper direction={'row'}>
-          <Button disabled={true}>{zoom}%</Button>
-          <Button onClick={() => resetZoom()}>Full</Button>
-          <Button onClick={() => fitImage()}>Fit</Button>
-          <Button onClick={() => moveToCenter()}>Center</Button>
+        <ButtonWrapper>
+          {zoom}%<StyledButton onClick={() => resetZoom()}>Full</StyledButton>
+          <StyledButton onClick={() => fitImage()}>Fit</StyledButton>
+          <StyledButton onClick={() => moveToCenter()}>Center</StyledButton>
         </ButtonWrapper>
         <TargetPan
           ref={targetRef}

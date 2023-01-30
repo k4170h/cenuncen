@@ -1,9 +1,8 @@
-import { Button } from '@mui/material';
 import React, { useCallback, useMemo } from 'react';
 import { createCanvasFromImage } from '../../utils/canvasUtils';
-import SaveAltIcon from '@mui/icons-material/SaveAlt';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { Stack } from '@mui/system';
+import Button from '../atoms/Button';
+import FlexRow from '../atoms/FlexRow';
+import SectionTitle from '../atoms/SectionTitle';
 
 type Props = {
   imageData?: ImageData;
@@ -57,36 +56,23 @@ const SaveButtons = ({ imageData }: Props) => {
 
   return (
     <>
-      <Stack direction="row" spacing={2} m={2}>
+      <SectionTitle>Save Image</SectionTitle>
+      <FlexRow>
         <Button
           onClick={() => {
             saveToClipboard();
           }}
           disabled={disabled}
-          variant="contained"
-          size="small"
         >
-          <ContentCopyIcon />
+          copy
         </Button>
-        <Button
-          variant="contained"
-          size="small"
-          onClick={() => saveToFile('jpg')}
-          disabled={disabled}
-        >
-          <SaveAltIcon sx={{ mb: 1 }} />
+        <Button onClick={() => saveToFile('jpg')} disabled={disabled}>
           JPG
         </Button>
-        <Button
-          variant="contained"
-          size="small"
-          onClick={() => saveToFile('jpg')}
-          disabled={disabled}
-        >
-          <SaveAltIcon sx={{ mb: 1 }} />
+        <Button onClick={() => saveToFile('jpg')} disabled={disabled}>
           PNG
         </Button>
-      </Stack>
+      </FlexRow>
     </>
   );
 };

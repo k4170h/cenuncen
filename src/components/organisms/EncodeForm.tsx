@@ -1,150 +1,175 @@
-import { Box, Stack, Typography } from '@mui/material';
-import React, { useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import ControlledTextarea from '../atoms/ControlledTextarea';
-import ControlledColorPicker from '../atoms/ControlledColorPicker';
-import ControlledSlider from '../atoms/ControlledSlider';
-import ContrastOutlinedIcon from '@mui/icons-material/ContrastOutlined';
-import CircleTwoToneIcon from '@mui/icons-material/CircleTwoTone';
-import ControlledSwitch from '../atoms/ControlledSwitch';
-import ControlledRadioPos from '../atoms/ControlledRadioPos';
-import FormTitle from '../atoms/FormTitle';
+import React, { useEffect } from 'react';
+import { DeepRequired, useForm } from 'react-hook-form';
+import SectionTitle from '../atoms/SectionTitle';
 import { FormUl, FormLi } from '../atoms/FormList';
-import {
-  FlatAccordion,
-  FlatAccordionDetails,
-  FlatAccordionSummary,
-} from '../atoms/FlatAccordion';
+import { FlatAccordion } from '../atoms/FlatAccordion';
 import { EncodeOptions } from '../../utils/types';
+import InputCheckbox from '../atoms/InputCheckbox';
+import InputRange from '../atoms/InputRange';
+import InputColor from '../atoms/InputColor';
+import InputText from '../atoms/InputText';
+import InputSelect from '../atoms/InputSelect';
+import FlexRow from '../atoms/FlexRow';
 
 type Props = {
-  onChange?: (v: EncodeOptions) => void;
+  onChange: (v: EncodeOptions) => void;
   encodeOptions: EncodeOptions;
 };
 
 const EncodeForm = ({ onChange, encodeOptions }: Props) => {
-  const { control, watch, setValue } = useForm<EncodeOptions>({
+  const {
+    watch,
+    setValue,
+    register,
+    trigger,
+
+    formState: { errors, isValid },
+  } = useForm<EncodeOptions>({
     defaultValues: encodeOptions,
     mode: 'onChange',
   });
-  const watchForm = watch();
   const doShiftColor = watch('doColorShift');
   const withKey = watch('withKey');
-  const lastValue = useRef(JSON.stringify(encodeOptions));
+  const shiftColor = watch('shiftColor');
+  const fillColor = watch('fillColor');
+  const withKeyFlgs = watch(['doSwap', 'doNega', 'doRotate']);
+
+  // Form内容更新時の処理
+  useEffect(() => {
+    const subscription = watch((values) => {
+      // ここでバリデート
+      trigger().then((v) => {
+        if (v) {
+          onChange(values as DeepRequired<EncodeOptions>);
+        }
+      });
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, onChange, isValid, trigger]);
 
   useEffect(() => {
-    const watchFormStr = JSON.stringify(watchForm);
-    if (lastValue.current !== watchFormStr) {
-      lastValue.current = watchFormStr;
-      onChange && onChange(watchForm);
-    }
-  }, [watchForm, onChange]);
-
-  useEffect(() => {
-    if (
-      !watchForm.doNega &&
-      !watchForm.doRotate &&
-      !watchForm.doSwap &&
-      watchForm.withKey
-    ) {
+    // キーの設定が無意味な時は非活性に
+    if (withKeyFlgs.every((v) => !v) && withKey) {
       setValue('withKey', false);
     }
-  }, [watchForm, setValue]);
+  }, [withKeyFlgs, withKey, setValue]);
 
   return (
     <>
       <form>
-        <FormTitle>Encode Setting</FormTitle>
+        <SectionTitle>Encode Setting</SectionTitle>
         <FormUl>
           <FormLi>
-            <ControlledSwitch
-              control={control}
+            <InputCheckbox
+              register={register}
               name="doSwap"
               label={<>Shuffle</>}
             />
           </FormLi>
           <FormLi>
-            <ControlledSwitch
-              control={control}
+            <InputCheckbox
+              register={register}
               name="doRotate"
               label={<>Rotate</>}
             />
           </FormLi>
           <FormLi>
-            <ControlledSwitch
-              control={control}
+            <InputCheckbox
+              register={register}
               name="doNega"
               label={<>Negative</>}
             />
           </FormLi>
           <FormLi>
-            <FlatAccordion expanded={doShiftColor}>
-              <FlatAccordionSummary>
-                <ControlledSwitch
-                  control={control}
-                  name="doColorShift"
-                  label={<>Contrast</>}
-                />
-              </FlatAccordionSummary>
-              <FlatAccordionDetails>
-                <Stack spacing={2} px={1} my={2}>
-                  <ControlledSlider
-                    control={control}
-                    name="contrastLevel"
-                    min={0.1}
-                    max={0.9}
-                    step={0.1}
-                    right={<ContrastOutlinedIcon />}
-                    left={<CircleTwoToneIcon />}
-                  />
-                  <ControlledColorPicker
-                    label="Color"
-                    control={control}
-                    name="shiftColor"
-                  />
-                </Stack>
-              </FlatAccordionDetails>
-            </FlatAccordion>
-          </FormLi>
-          <FormLi>
-            <FlatAccordion expanded={withKey}>
-              <FlatAccordionSummary>
-                <ControlledSwitch
-                  control={control}
-                  name="withKey"
-                  label={<>Key</>}
-                  disabled={
-                    !watchForm.doNega &&
-                    !watchForm.doRotate &&
-                    !watchForm.doSwap
-                  }
-                />
-              </FlatAccordionSummary>
-              <FlatAccordionDetails>
-                <Stack px={1} my={2}>
-                  <ControlledTextarea
-                    control={control}
-                    name="key"
-                    label="key"
-                    type="text"
-                    width="8em"
-                  />
-                </Stack>
-              </FlatAccordionDetails>
-            </FlatAccordion>
-          </FormLi>
-          <FormLi>
-            <ControlledColorPicker
-              label="Fill Color"
-              control={control}
-              name="fillColor"
+            <InputCheckbox
+              register={register}
+              name="doColorShift"
+              label={<>Contrast</>}
             />
+            <FlatAccordion open={doShiftColor} height={100}>
+              <InputRange
+                register={register}
+                name="contrastLevel"
+                min={0.1}
+                max={0.9}
+                step={0.1}
+                right={'high'}
+                left={'low'}
+              />
+              <br />
+
+              <FlexRow>
+                <InputText
+                  register={register}
+                  name="shiftColor"
+                  prefix="#"
+                  error={errors.fillColor}
+                  pattern={/^([A-Fa-f0-9]{6})$/}
+                />
+                <InputColor
+                  onChange={(color) => {
+                    setValue('shiftColor', color);
+                  }}
+                  value={shiftColor}
+                />
+              </FlexRow>
+            </FlatAccordion>
           </FormLi>
           <FormLi>
-            <Box position={'relative'}>
-              <Typography position={'absolute'}>Location</Typography>
-              <ControlledRadioPos control={control} name="pos" />
-            </Box>
+            <InputCheckbox
+              register={register}
+              name="withKey"
+              label={<>Key</>}
+              disabled={withKeyFlgs.every((v) => !v)}
+            />
+            <FlatAccordion open={withKey} height={40}>
+              <InputText register={register} name="key" width="8em" />
+            </FlatAccordion>
+          </FormLi>
+          <FormLi>
+            <FlexRow>
+              <InputText
+                register={register}
+                name="fillColor"
+                prefix="#"
+                error={errors.fillColor}
+                pattern={/^([A-Fa-f0-9]{6})$/}
+              />
+              <InputColor
+                onChange={(color) => {
+                  setValue('fillColor', color);
+                }}
+                value={fillColor}
+              />
+            </FlexRow>
+          </FormLi>
+          <FormLi>
+            <div style={{ position: 'relative' }}>
+              <p>Location</p>
+              <InputSelect
+                register={register}
+                name="pos"
+                items={[
+                  {
+                    label: 'top',
+                    value: 'top',
+                  },
+                  {
+                    label: 'right',
+                    value: 'right',
+                  },
+                  {
+                    label: 'bottom',
+                    value: 'bottom',
+                  },
+                  {
+                    label: 'left',
+                    value: 'left',
+                  },
+                ]}
+              />
+            </div>
           </FormLi>
         </FormUl>
       </form>

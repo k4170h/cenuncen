@@ -7,10 +7,8 @@ import {
   TextField,
 } from '@mui/material';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
-import { Stack } from '@mui/system';
 import styled from '@emotion/styled';
 import { HexColorPicker } from 'react-colorful';
-import ColorizeIcon from '@mui/icons-material/Colorize';
 
 const Popover = styled('div')({
   position: 'absolute',
@@ -70,7 +68,7 @@ const ControlledColorPicker = <T extends FieldValues>({
           }}
           name={name}
           render={({ field, fieldState }) => (
-            <Stack direction="row" spacing={1} position="relative">
+            <>
               <TextField
                 type="string"
                 size="small"
@@ -106,23 +104,21 @@ const ControlledColorPicker = <T extends FieldValues>({
               {displayColorPicker && (
                 <Popover>
                   <PickerWrapper className="custom">
-                    <Stack>
-                      <HexColorPicker
-                        color={field.value}
-                        onChange={(c) => {
-                          // field.onChange({ target: { value: c.slice(1) } });
-                          setColor(c.slice(1));
-                        }}
-                      />
-                      <Button
-                        onClick={() => {
-                          field.onChange({ target: { value: color } });
-                          close();
-                        }}
-                      >
-                        OK
-                      </Button>
-                    </Stack>
+                    <HexColorPicker
+                      color={field.value}
+                      onChange={(c) => {
+                        // field.onChange({ target: { value: c.slice(1) } });
+                        setColor(c.slice(1));
+                      }}
+                    />
+                    <Button
+                      onClick={() => {
+                        field.onChange({ target: { value: color } });
+                        close();
+                      }}
+                    >
+                      OK
+                    </Button>
                   </PickerWrapper>
                   <Cover
                     onClick={() => {
@@ -132,7 +128,7 @@ const ControlledColorPicker = <T extends FieldValues>({
                   />
                 </Popover>
               )}
-            </Stack>
+            </>
           )}
         />
       </FormControl>

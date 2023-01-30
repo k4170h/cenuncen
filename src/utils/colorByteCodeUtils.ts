@@ -30,13 +30,13 @@ if (ImageData.prototype.getPixelColor === undefined) {
 }
 
 // Base64文字を数値に変換する
-export const base64CharToNum = (char: string) =>
+const base64CharToNum = (char: string) =>
   BASE64_TABLE.findIndex((v) => v === char);
 // Base64文字列を色配列に変換する
 const base64StringToColors = (str: string): Pixel[] =>
   str.split('').map((v) => numToColor(base64CharToNum(v)));
 // 数値をBase64文字に変換する
-export const numToBase64Char = (index: number) => BASE64_TABLE[index];
+const numToBase64Char = (index: number) => BASE64_TABLE[index];
 // 色配列をBase64文字列に変換する
 const colorsToBase64String = (colors: Pixel[]) =>
   colors.reduce((p, c) => p + numToBase64Char(colorToNum(c)), '');
@@ -94,9 +94,9 @@ const objToBase64 = (v: unknown) => {
 
 // base64をUint8Array→JSON→オブジェクトに変換する
 const base64ToObj = (v: string): unknown => {
-  // デコード失敗時、Base64末端の"A"を詰め物(=)に変更しつつ再トライする
   let retry = 0;
   while (retry < 4) {
+    // デコード失敗時、Base64末端の"A"を詰め物(=)に変更しつつ再トライする
     try {
       const str = window.atob(v);
       const ret = decode(

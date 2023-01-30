@@ -1,18 +1,8 @@
 import React, { useCallback } from 'react';
 import { RectArea } from '../../utils/types';
-import {
-  IconButton,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
 import { COLOR_PALETTE } from '../../utils/definition';
-import FormTitle from '../atoms/FormTitle';
+import SectionTitle from '../atoms/SectionTitle';
+import Button from '../atoms/Button';
 
 type Props = {
   selectedAreas: RectArea[];
@@ -30,45 +20,40 @@ const SelectedAreaList = ({ selectedAreas, onUpdateList }: Props) => {
   // };
 
   return (
-    <Stack>
-      <FormTitle>Selected Area List</FormTitle>
-      <Table sx={{ width: 260 }} size="small">
-        <TableBody>
+    <>
+      <SectionTitle>Selected Area List</SectionTitle>
+      <table style={{ width: 260 }}>
+        <tbody>
           {selectedAreas.length === 0 && (
-            <TableRow
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-            >
-              <TableCell colSpan={3}>not selected</TableCell>
-            </TableRow>
+            <tr>
+              <td colSpan={3}>not selected</td>
+            </tr>
           )}
           {selectedAreas.map((v, i) => {
             const key = areaToKey(v);
             return (
-              <TableRow
-                key={key}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-              >
-                <TableCell
-                  padding="none"
+              <tr key={key}>
+                <td
                   style={{
+                    padding: 'none',
                     width: '4px',
                     backgroundColor: COLOR_PALETTE[i % COLOR_PALETTE.length],
                   }}
-                ></TableCell>
-                <TableCell align="center" size="small">
+                ></td>
+                <td align="center">
                   [{v[0]},{v[1]},{v[2]},{v[3]}]
-                </TableCell>
-                <TableCell align="center">
-                  <IconButton onClick={() => deleteArea(areaToKey(v))}>
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
+                </td>
+                <td align="center">
+                  <Button onClick={() => deleteArea(areaToKey(v))}>
+                    Remove
+                  </Button>
+                </td>
+              </tr>
             );
           })}
-        </TableBody>
-      </Table>
-    </Stack>
+        </tbody>
+      </table>
+    </>
   );
 };
 

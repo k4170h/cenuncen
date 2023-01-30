@@ -1,6 +1,6 @@
 import React, { ReactNode, useCallback, useRef } from 'react';
-import Button from '@mui/material/Button';
 import { createCanvasFromImage } from '../../utils/canvasUtils';
+import Button from '../atoms/Button';
 
 type Props = {
   onImageLoaded: (imageData: ImageData) => void;
@@ -38,9 +38,7 @@ const ImageFileLoader = ({ onImageLoaded, children }: Props) => {
 
   return (
     <>
-      <Button variant="contained" onClick={handleClick}>
-        {children ?? 'select local file'}
-      </Button>
+      <Button onClick={handleClick}>{children ?? 'select local file'}</Button>
       <input
         type="file"
         accept="image/*"
