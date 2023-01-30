@@ -69,7 +69,7 @@ const SaveButtons = ({ imageData }: Props) => {
         <Button onClick={() => saveToFile('jpg')} disabled={disabled}>
           JPG
         </Button>
-        <Button onClick={() => saveToFile('jpg')} disabled={disabled}>
+        <Button onClick={() => saveToFile('png')} disabled={disabled}>
           PNG
         </Button>
       </FlexRow>
