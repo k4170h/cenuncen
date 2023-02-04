@@ -40,6 +40,7 @@ const StyledDiv = styled('div')({
     content: 'attr(data-before)',
     color: '#333a',
     padding: '4px',
+    lineHeight: '1.5em',
   },
   backgroundColor: '#fff',
 });

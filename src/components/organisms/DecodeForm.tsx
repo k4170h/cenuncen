@@ -1,6 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { DeepRequired, useForm } from 'react-hook-form';
-import { DEFAULT_DECODE_OPTIONS } from '../../utils/definition';
 import { FormLi, FormUl } from '../atoms/FormList';
 import { DecodeOptions } from '../../utils/types';
 import InputCheckbox from '../atoms/InputCheckbox';
