@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { DEFAULT_TRIAL_DECODE_OPTIONS } from '../../utils/definition';
 import SectionTitle from '../atoms/SectionTitle';
 import { FormLi, FormUl } from '../atoms/FormList';
-import { FlatAccordion } from '../atoms/FlatAccordion';
 import { TrialDecodeOptions } from '../../utils/types';
 import CenteringBox from '../atoms/CenteringBox';
 import Button from '../atoms/Button';
@@ -16,7 +15,6 @@ type Props = {
   trialDecodeOptions?: TrialDecodeOptions;
   disabled?: boolean;
   imageSize: [number, number];
-  expanded?: boolean;
 };
 
 const TrialDecodeForm = ({
@@ -25,7 +23,6 @@ const TrialDecodeForm = ({
   disabled,
   imageSize,
   onSubmit,
-  expanded,
 }: Props) => {
   const { register, watch, handleSubmit } = useForm<TrialDecodeOptions>({
     defaultValues: trialDecodeOptions,
@@ -84,7 +81,7 @@ const TrialDecodeForm = ({
           </FormLi>
         </FormUl>
         <Button type="submit" disabled={disabled}>
-          <>Decode &gt;</>
+          <>DECODE &gt;</>
         </Button>
       </form>
     </>

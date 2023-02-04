@@ -40,12 +40,12 @@ const SelectedAreaList = ({ selectedAreas, onUpdateList }: Props) => {
                     backgroundColor: COLOR_PALETTE[i % COLOR_PALETTE.length],
                   }}
                 ></td>
-                <td align="center">
+                <td align="center" style={{ fontSize: '0.8em' }}>
                   [{v[0]},{v[1]},{v[2]},{v[3]}]
                 </td>
                 <td align="center">
                   <Button onClick={() => deleteArea(areaToKey(v))}>
-                    Remove
+                    REMOVE
                   </Button>
                 </td>
               </tr>

@@ -14,10 +14,10 @@ const ImageLoader = ({ onImageLoaded }: Props) => {
       <SectionTitle>Open image</SectionTitle>
       <FlexBox>
         <ImageFileLoader onImageLoaded={onImageLoaded}>
-          local file
+          LOCAL FILE
         </ImageFileLoader>
         <ClipboardImageLoader onImageLoaded={onImageLoaded}>
-          clipboard
+          CLIPBOARD
         </ClipboardImageLoader>
       </FlexBox>
     </>

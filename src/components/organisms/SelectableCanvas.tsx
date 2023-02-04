@@ -16,6 +16,7 @@ import { getNear } from '../../utils/mathUtils';
 import { COLOR_PALETTE } from '../../utils/definition';
 import { convertRectAreaForGridSize } from '../../utils/convertUtils';
 import { PanningInfo } from './PanningWrapper';
+import SelectGuilde from '../atoms/SelectGuide';
 
 const Canvas = styled('canvas')({});
 
@@ -39,6 +40,7 @@ const SelectableCanvas = ({
   const [baseImageData, setBaseImageData] = useState<ImageData | null>(null);
   const [mouseMoved, setMouseMoved] = useState(false);
   const { zoom } = useContext(PanningInfo);
+  const [viewGuide, setViewGuid] = useState(true);
 
   // 下地になるImageDataを作成する
   useEffect(() => {
@@ -114,6 +116,8 @@ const SelectableCanvas = ({
   // マウスドラッグ開始
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+      setViewGuid(false);
+
       // 左クリックでなければ終了
       if (e.button !== 0) {
         return;
@@ -232,22 +236,34 @@ const SelectableCanvas = ({
     },
     [startPos, endPos, mouseMoved, refleshCanvas, refleshArea, onSelectArea]
   );
-  if (canvas.current) {
-    canvas.current.oncontextmenu = () => false;
-    canvas.current.onwheel = () => false;
-  }
+
+  useEffect(() => {
+    if (canvas.current) {
+      canvas.current.oncontextmenu = () => false;
+      canvas.current.onwheel = () => false;
+    }
+  }, []);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setViewGuid(false);
+    }, 3000);
+  }, []);
 
   return (
     <>
       {baseImageData != null && (
-        <Canvas
-          ref={canvas}
-          width={baseImageData.width}
-          height={baseImageData.height}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-        />
+        <div style={{ position: 'relative' }}>
+          <Canvas
+            ref={canvas}
+            width={baseImageData.width}
+            height={baseImageData.height}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+          />
+          {viewGuide && <SelectGuilde />}
+        </div>
       )}
     </>
   );
@@ -297,11 +313,4 @@ const getPattern = (baseCtx: CanvasRenderingContext2D) => {
     throw new Error();
   }
   return ptn;
-};
-
-const strokeLine = (ctx: CanvasRenderingContext2D, path: RectArea) => {
-  ctx.beginPath();
-  ctx.moveTo(path[0], path[1]);
-  ctx.lineTo(path[2], path[3]);
-  ctx.stroke();
 };

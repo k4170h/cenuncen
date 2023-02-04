@@ -64,7 +64,7 @@ const SaveButtons = ({ imageData }: Props) => {
           }}
           disabled={disabled}
         >
-          copy
+          COPY
         </Button>
         <Button onClick={() => saveToFile('jpg')} disabled={disabled}>
           JPG
