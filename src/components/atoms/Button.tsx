@@ -11,14 +11,17 @@ type Props<T> = {
 };
 
 const StyledButton = styled('button')({
-  padding: '8px 16px',
+  padding: '6px 16px',
   border: 'none',
-  borderRadius: '8px',
+  borderRadius: '6px',
   backgroundColor: '#ab47bc',
   color: '#fff',
-  fontSize: '1em',
+  fontSize: '0.9em',
+  letterSpacing: '0.02em',
+  fontWeight: 'bold',
   cursor: 'pointer',
   transition: 'background-color linear .2s ',
+  boxShadow: '0 1px 3px 0px rgba(0,0,0,.2)',
   '&:disabled': {
     backgroundColor: '#ab47bccc',
     color: '#fffa',

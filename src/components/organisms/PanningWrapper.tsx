@@ -24,10 +24,6 @@ const Base = styled('div')({
   width: 'calc(100% - 300px)',
   height: '100%',
   position: 'relative',
-  backgroundImage: 'url(areaSelect.svg)',
-  backgroundRepeat: 'no-repeat',
-  backgroundSize: '30%',
-  backgroundPosition: '50% 50%',
 });
 
 const TargetPan = styled('div')({
@@ -268,7 +264,7 @@ const PanningWrapper = forwardRef(({ children }: Props, ref) => {
     return (): void => {
       resizeObserver.disconnect();
     };
-  }, []);
+  }, [fitImage]);
 
   // 親コンポーネントから実施する用
   useImperativeHandle(ref, () => ({

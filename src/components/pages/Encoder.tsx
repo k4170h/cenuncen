@@ -174,6 +174,8 @@ const Encoder = ({ page: defaultPage }: Props) => {
           }
         }, 1);
       }).catch((e) => {
+        setImageDataToDecode(undefined);
+        setDecodedImageData(undefined);
         alert('Decode failed.');
         console.error(e);
       });
@@ -253,11 +255,11 @@ const Encoder = ({ page: defaultPage }: Props) => {
         current={page}
         items={[
           {
-            label: 'encode',
+            label: 'ENCODE',
             value: 'encode',
           },
           {
-            label: 'decode',
+            label: 'DECODE',
             value: 'decode',
           },
         ]}
@@ -312,7 +314,7 @@ const Encoder = ({ page: defaultPage }: Props) => {
                 });
               }}
             >
-              Encode &gt;
+              ENCODE &gt;
             </Button>
           </div>
         )}
@@ -321,7 +323,7 @@ const Encoder = ({ page: defaultPage }: Props) => {
         {mode === 'encodeSetting' && page === 'encode' && (
           <>
             <div>
-              <Button onClick={switchToAreaSelect}>&lt; Back</Button>
+              <Button onClick={switchToAreaSelect}>&lt; BACK</Button>
             </div>
             <EncodeForm
               onChange={(v) => {
@@ -356,7 +358,7 @@ const Encoder = ({ page: defaultPage }: Props) => {
                     setPage('encode');
                   }}
                 >
-                  &lt; Back
+                  &lt; BACK
                 </Button>
               </div>
             )}

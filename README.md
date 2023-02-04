@@ -1,21 +1,22 @@
-## Setup
+# make my art unsen
 
+## Develop
+
+### Init
 ```
 npm install
 ```
 
-## Build
+### Build
 
 ```
 npm run build
 ```
 
-## Run
+### Run
 
-```
-npm run watch
-```
+open `dist/converter.html` , after build.
 
-## Started with
+### This project started with
 
 [chrome-extension-typescript-starter](https://github.com/chibat/chrome-extension-typescript-starter/)
