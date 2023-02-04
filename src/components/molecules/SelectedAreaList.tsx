@@ -26,7 +26,9 @@ const SelectedAreaList = ({ selectedAreas, onUpdateList }: Props) => {
         <tbody>
           {selectedAreas.length === 0 && (
             <tr>
-              <td colSpan={3}>not selected</td>
+              <td colSpan={3} style={{ color: '#aaa' }}>
+                not selected
+              </td>
             </tr>
           )}
           {selectedAreas.map((v, i) => {

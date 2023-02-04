@@ -11,6 +11,9 @@ const Li = styled('li')({
   margin: 0,
   padding: '15px 0px 15px 20px',
   borderBottom: '1px solid rgba(244, 244, 244, 1)',
+  '&:last-child': {
+    borderBottom: 'none',
+  },
 });
 
 type Props = {

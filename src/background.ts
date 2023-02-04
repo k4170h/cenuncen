@@ -9,19 +9,19 @@ chrome.action.onClicked.addListener(async () => {
 chrome.runtime.onInstalled.addListener(function (details) {
   chrome.contextMenus.create({
     id: 'parent',
-    title: 'uncen',
+    title: 'Ancen',
     contexts: ['all'],
   });
 
   chrome.contextMenus.create({
     id: 'decode' as MenuId,
-    title: 'decode',
+    title: 'Decode',
     contexts: ['image'],
     parentId: 'parent',
   });
   chrome.contextMenus.create({
     id: 'openDecode' as MenuId,
-    title: 'open decoder',
+    title: 'Open decoder',
     contexts: ['all'],
     parentId: 'parent',
   });

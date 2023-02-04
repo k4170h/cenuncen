@@ -11,7 +11,7 @@ type Props = {
 const ImageLoader = ({ onImageLoaded }: Props) => {
   return (
     <>
-      <SectionTitle>Open image</SectionTitle>
+      <SectionTitle>Open Image</SectionTitle>
       <FlexBox>
         <ImageFileLoader onImageLoaded={onImageLoaded}>
           LOCAL FILE

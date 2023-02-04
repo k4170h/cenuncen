@@ -36,7 +36,7 @@ const DecodeForm = ({ onChange, decodeOptions, disabled }: Props) => {
           <InputCheckbox
             register={register}
             name="doCrop"
-            label="clip"
+            label="Clip"
             disabled={disabled}
           />
         </FormLi>
@@ -73,7 +73,7 @@ const DecodeForm = ({ onChange, decodeOptions, disabled }: Props) => {
           <InputText
             register={register}
             name="key"
-            label="key"
+            label="Key"
             width="5em"
             disabled={disabled}
           />
