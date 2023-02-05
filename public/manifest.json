@@ -1,18 +1,18 @@
 {
   "manifest_version": 3,
 
-  "name": "uncen",
-  "description": "uncensoring my art",
+  "name": "cenuncen",
+  "description": "censoring/uncensoring image",
   "version": "1.0",
 
-  "options_ui": {
-    "page": "options.html"
-  },
-
   "action": {
-    "default_icon": "icon.png"
+    "default_icon": "icon16.png"
   },
-
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -25,6 +25,6 @@
     "service_worker": "js/background.js"
   },
 
-  "permissions": ["activeTab", "contextMenus", "tabs"],
+  "permissions": ["contextMenus"],
   "host_permissions": ["<all_urls>"]
 }

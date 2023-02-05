@@ -1,7 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import SelectableCanvas from '../organisms/SelectableCanvas';
 import AreaSelectForm from '../organisms/AreaSelectForm';
-import styled from '@emotion/styled';
 import SelectedAreaList from '../molecules/SelectedAreaList';
 import PanningWrapper from '../organisms/PanningWrapper';
 import EncodeForm from '../organisms/EncodeForm';
@@ -32,26 +31,7 @@ import {
 import PendingBox from '../atoms/PendingBox';
 import Button from '../atoms/Button';
 import ImageDataCanvas from '../organisms/ImageDataCanvas';
-
-const ToolBox = styled('div')({
-  position: 'fixed',
-  backgroundColor: '#fff',
-  width: '300px',
-  bottom: '0',
-  right: '0',
-  padding: 20,
-  zIndex: 1000,
-  height: '100%',
-  boxShadow: '0 1px 3px 0px rgba(0,0,0,.2)',
-  overflowY: 'auto',
-});
-
-const SlidableToolBox = styled(ToolBox)({
-  transition: 'right ease-out .2s',
-  '&.hide': {
-    right: '-300px',
-  },
-});
+import { Toolbox, ToolboxBody, ToolboxHead } from '../atoms/Toolbox';
 
 type Props = {
   page: Page;
@@ -284,97 +264,109 @@ const Encoder = ({ page: defaultPage }: Props) => {
           <ImageDataCanvas imageData={decodedImageData} />
         )}
       </PanningWrapper>
-      <ToolBox>
+      <Toolbox>
         {mode === 'areaSelect' && page === 'encode' && (
-          <div>
-            <ImageLoader onImageLoaded={handleChangeImageToEncode} />
-            <AreaSelectForm
-              disabled={!imageDataToEncode}
-              imageSize={[
-                imageDataToEncode?.width ?? 0,
-                imageDataToEncode?.height ?? 0,
-              ]}
-              onChange={(v) => {
-                setAreaSelectOptions(v);
-              }}
-              areaSelectOptions={areaSelectOptions}
-            />
-            <SelectedAreaList
-              selectedAreas={selectedAreas}
-              onUpdateList={(v) => {
-                setSelectedAreas(v);
-              }}
-            />
-            <div style={{ height: '32px' }} />
-            <Button
-              disabled={!selectedAreas.length}
-              onClick={() => {
-                encode().then(() => {
-                  setMode('encodeSetting');
-                });
-              }}
-            >
-              ENCODE &gt;
-            </Button>
-          </div>
+          <>
+            <ToolboxHead>SELECT AREA</ToolboxHead>
+            <ToolboxBody>
+              <ImageLoader onImageLoaded={handleChangeImageToEncode} />
+              <AreaSelectForm
+                disabled={!imageDataToEncode}
+                imageSize={[
+                  imageDataToEncode?.width ?? 0,
+                  imageDataToEncode?.height ?? 0,
+                ]}
+                onChange={(v) => {
+                  setAreaSelectOptions(v);
+                }}
+                areaSelectOptions={areaSelectOptions}
+              />
+              <SelectedAreaList
+                selectedAreas={selectedAreas}
+                onUpdateList={(v) => {
+                  setSelectedAreas(v);
+                }}
+              />
+              <div style={{ height: '32px' }} />
+              <Button
+                disabled={!selectedAreas.length}
+                onClick={() => {
+                  encode().then(() => {
+                    setMode('encodeSetting');
+                  });
+                }}
+              >
+                ENCODE &gt;
+              </Button>
+            </ToolboxBody>
+          </>
         )}
-      </ToolBox>
-      <SlidableToolBox className={mode !== 'encodeSetting' ? 'hide' : ''}>
+      </Toolbox>
+      <Toolbox hide={mode !== 'encodeSetting'}>
         {mode === 'encodeSetting' && page === 'encode' && (
           <>
-            <div>
-              <Button onClick={switchToAreaSelect}>&lt; BACK</Button>
-            </div>
-            <EncodeForm
-              onChange={(v) => {
-                encode({ encodeOptions: v }).then();
-                setEncodeOptions(v);
-              }}
-              encodeOptions={encodeOptions}
-            />
-            <SaveButtons {...{ imageData: encodedImageData }} />
-            <div>
-              {encodedImageData && (
-                <TrialDecodeForm
-                  onChange={(v) => {
-                    setTrialDecodeOptions(v);
-                  }}
-                  trialDecodeOptions={trialDecodeOptions}
-                  imageSize={[encodedImageData.width, encodedImageData.height]}
-                  onSubmit={() => decodeFromEncodedImage(trialDecodeOptions)}
-                />
-              )}
-            </div>
+            <ToolboxHead>ENCODE</ToolboxHead>
+            <ToolboxBody>
+              <div>
+                <Button onClick={switchToAreaSelect}>&lt; BACK</Button>
+              </div>
+              <EncodeForm
+                onChange={(v) => {
+                  encode({ encodeOptions: v }).then();
+                  setEncodeOptions(v);
+                }}
+                encodeOptions={encodeOptions}
+              />
+              <SaveButtons {...{ imageData: encodedImageData }} />
+              <div>
+                {encodedImageData && (
+                  <TrialDecodeForm
+                    onChange={(v) => {
+                      setTrialDecodeOptions(v);
+                    }}
+                    trialDecodeOptions={trialDecodeOptions}
+                    imageSize={[
+                      encodedImageData.width,
+                      encodedImageData.height,
+                    ]}
+                    onSubmit={() => decodeFromEncodedImage(trialDecodeOptions)}
+                  />
+                )}
+              </div>
+            </ToolboxBody>
           </>
         )}
-      </SlidableToolBox>
-      <SlidableToolBox className={page !== 'decode' ? 'hide' : ''}>
+      </Toolbox>
+      <Toolbox hide={page !== 'decode'}>
         {page === 'decode' && (
           <>
-            {tryDecoded && (
-              <div>
-                <Button
-                  onClick={() => {
-                    setPage('encode');
-                  }}
-                >
-                  &lt; BACK
-                </Button>
-              </div>
-            )}
-            <ImageLoader onImageLoaded={handleChangeImageToDecode} />
-            <DecodeForm
-              onChange={(v) => {
-                decode({ decodeOptions: v });
-                setDecodeOptions(v);
-              }}
-              decodeOptions={decodeOptions}
-              disabled={!decodedImageData}
-            />
-            <SaveButtons {...{ imageData: decodedImageData }} />
+            <ToolboxHead>ENCODE</ToolboxHead>
+            <ToolboxBody>
+              {tryDecoded && (
+                <div>
+                  <Button
+                    onClick={() => {
+                      setPage('encode');
+                    }}
+                  >
+                    &lt; BACK
+                  </Button>
+                </div>
+              )}
+              <ImageLoader onImageLoaded={handleChangeImageToDecode} />
+              <DecodeForm
+                onChange={(v) => {
+                  decode({ decodeOptions: v });
+                  setDecodeOptions(v);
+                }}
+                decodeOptions={decodeOptions}
+                disabled={!decodedImageData}
+              />
+              <SaveButtons {...{ imageData: decodedImageData }} />
+            </ToolboxBody>
           </>
         )}
-      </SlidableToolBox>
+      </Toolbox>
       <PendingBox show={pending} />
     </>
   );

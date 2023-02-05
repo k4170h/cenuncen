@@ -1,6 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { DeepRequired, useForm } from 'react-hook-form';
-import { DEFAULT_DECODE_OPTIONS } from '../../utils/definition';
 import { FormLi, FormUl } from '../atoms/FormList';
 import { DecodeOptions } from '../../utils/types';
 import InputCheckbox from '../atoms/InputCheckbox';
@@ -36,7 +35,7 @@ const DecodeForm = ({ onChange, decodeOptions, disabled }: Props) => {
           <InputCheckbox
             register={register}
             name="doCrop"
-            label="clip"
+            label="Clip"
             disabled={disabled}
           />
         </FormLi>
@@ -73,7 +72,7 @@ const DecodeForm = ({ onChange, decodeOptions, disabled }: Props) => {
           <InputText
             register={register}
             name="key"
-            label="key"
+            label="Key"
             width="5em"
             disabled={disabled}
           />
