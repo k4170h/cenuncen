@@ -51,7 +51,7 @@ https://k4170h.github.io/make-my-art-uncen/converter.html
   * **Contrast**  
     ブロックのコントラストを下げる。下げたことで空いた色の帯域を利用して、任意の色に近づけられる。  
     数値を低く設定すると、復元時に減色したような出来になる。(不可逆な劣化が起きる)  
-    また、コントラストが低くなるとJPG保存時の劣化が激しくなる傾向にあり、デコード時の品質が下がる。（下図）
+    また、コントラストが低くなるとJPG保存時の劣化が激しくなる傾向にあり、デコード時の品質が下がる。（下図）  
     ![cenuncen_contrast](https://user-images.githubusercontent.com/113768833/216820015-c9b6591c-b127-4fc2-9e14-92a7fa4e3876.jpg)
 
   * **Key**  
@@ -124,7 +124,9 @@ npm run build
 
 ### Run
 
-open `dist/converter.html` , after build.
+Open `dist/converter.html` , after build.  
+or  
+Load `dist/` on the extension page of Chrome in developer mode.
 
 ### This project started with
 
