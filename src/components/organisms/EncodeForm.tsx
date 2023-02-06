@@ -61,31 +61,19 @@ const EncodeForm = ({ onChange, encodeOptions }: Props) => {
         <SectionTitle>Encode Setting</SectionTitle>
         <FormUl>
           <FormLi>
-            <InputCheckbox
-              register={register}
-              name="doSwap"
-              label={<>Shuffle</>}
-            />
+            <InputCheckbox register={register} name="doSwap" label="Shuffle" />
           </FormLi>
           <FormLi>
-            <InputCheckbox
-              register={register}
-              name="doRotate"
-              label={<>Rotate</>}
-            />
+            <InputCheckbox register={register} name="doRotate" label="Rotate" />
           </FormLi>
           <FormLi>
-            <InputCheckbox
-              register={register}
-              name="doNega"
-              label={<>Negative</>}
-            />
+            <InputCheckbox register={register} name="doNega" label="Negative" />
           </FormLi>
           <FormLi>
             <InputCheckbox
               register={register}
               name="doColorShift"
-              label={<>Contrast</>}
+              label="Contrast"
             />
             <FlatAccordion open={doShiftColor} height={100}>
               <InputRange
@@ -135,6 +123,7 @@ const EncodeForm = ({ onChange, encodeOptions }: Props) => {
                 prefix="#"
                 error={errors.fillColor}
                 pattern={/^([A-Fa-f0-9]{6})$/}
+                label="Fill Color"
               />
               <InputColor
                 onChange={(color) => {
