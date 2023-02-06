@@ -30,8 +30,8 @@ const ColoringButton = styled('button')({
   border: 'none',
   borderRadius: '2px',
   width: '2em',
-  height: '1em',
   position: 'relative',
+  height: '100%',
 });
 
 type Props = {

@@ -9,7 +9,7 @@ chrome.action.onClicked.addListener(async () => {
 chrome.runtime.onInstalled.addListener(function (details) {
   chrome.contextMenus.create({
     id: 'parent',
-    title: 'Ancen',
+    title: 'Cenuncen',
     contexts: ['all'],
   });
 
