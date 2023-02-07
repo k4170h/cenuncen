@@ -23,7 +23,7 @@ const EncodeForm = ({ onChange, encodeOptions }: Props) => {
     register,
     trigger,
 
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<EncodeOptions>({
     defaultValues: encodeOptions,
     mode: 'onChange',
@@ -46,7 +46,7 @@ const EncodeForm = ({ onChange, encodeOptions }: Props) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, onChange, isValid, trigger]);
+  }, [watch, onChange, trigger]);
 
   useEffect(() => {
     // キーの設定が無意味な時は非活性に
