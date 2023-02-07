@@ -70,7 +70,7 @@ const replaceImage = async (src: string, dataURI: string) => {
   div.style.left = '0';
   div.style.width = '100%';
   div.style.height = '100%';
-  div.style.zIndex = '1200';
+  div.style.zIndex = '10000';
   div.style.textAlign = 'center';
   div.style.backgroundColor = ' rgba(0,0,0,.8)';
   div.style.display = 'flex';
