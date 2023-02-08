@@ -11,12 +11,13 @@ https://k4170h.github.io/make-my-art-uncen/converter.html
 
 ## 簡単な使い方
 
-- ![cenuncen_01](https://user-images.githubusercontent.com/113768833/217227123-70e34aa1-7133-41af-8688-7d0c8bbb2829.png)  
+- ![cenuncen_01](https://user-images.githubusercontent.com/113768833/217395728-e6e80d97-94b4-4168-a326-38c5996f6fe0.png)  
 1. 画像をローカルファイルから開くか、クリップボードから貼り付ける。 
 2. 画像上のブロックで切り出したい範囲を選択する。  
 3. `ENCODE>` ボタンを押下する。  
-  ![cenuncen_02](https://user-images.githubusercontent.com/113768833/217231341-bb5fb54b-82ea-4ddc-a17b-73469225e647.png)  
+  ![cenuncen_02](https://user-images.githubusercontent.com/113768833/217395761-d4f8b5e1-abea-4e54-a67c-e04fddce5e74.png)  
 4. エンコード済み画像を保存する。
+
 
 ---
 
@@ -161,3 +162,4 @@ Load `dist/` on the extension page of Chrome in developer mode.
 ### This project started with
 
 [chrome-extension-typescript-starter](https://github.com/chibat/chrome-extension-typescript-starter/)
+
