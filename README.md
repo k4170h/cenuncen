@@ -11,6 +11,7 @@ https://k4170h.github.io/make-my-art-uncen/converter.html
 
 ## 簡単な使い方
 
+### エンコード
 - ![cenuncen_01](https://user-images.githubusercontent.com/113768833/217395728-e6e80d97-94b4-4168-a326-38c5996f6fe0.png)  
 1. 画像をローカルファイルから開くか、クリップボードから貼り付ける。 
 2. 画像上のブロックで切り出したい範囲を選択する。  
@@ -18,6 +19,12 @@ https://k4170h.github.io/make-my-art-uncen/converter.html
   ![cenuncen_02](https://user-images.githubusercontent.com/113768833/217395761-d4f8b5e1-abea-4e54-a67c-e04fddce5e74.png)  
 4. エンコード済み画像を保存する。
 
+### デコード
+
+- ![cenuncen_03](https://user-images.githubusercontent.com/113768833/217431856-6597937a-f075-45aa-b522-3a880a761991.png)
+1. `DECODE` を選択する。
+2. デコード対象を選択する
+3. 画面上のデコード済み画像を保存する。
 
 ---
 
