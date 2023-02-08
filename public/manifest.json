@@ -3,7 +3,7 @@
 
   "name": "cenuncen",
   "description": "censoring/uncensoring image",
-  "version": "1.0",
+  "version": "1.1",
 
   "action": {
     "default_icon": "icon16.png"
