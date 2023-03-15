@@ -11,7 +11,8 @@ const Converter = () => {
   const query = queryString.parse(document.location.search);
   useEffect(() => {
     const d = query['d'] as string;
-    if (d != null) {
+    console.log(d);
+    if (d === '1' || d === undefined) {
       setPage('decode');
     } else {
       setPage('encode');
