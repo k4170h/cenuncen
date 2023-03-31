@@ -1,13 +1,12 @@
-# make my art unsen
+# cenuncen
 対象の画像の任意のエリアをブロック単位で切り出し、隅に並べた画像を生成するツール。  
 生成された画像は、それ単体で当該ツールを使用し復元が可能。  
 
 https://user-images.githubusercontent.com/113768833/217261175-7f57f8f3-5049-4f26-8230-c0212fc30d8e.mp4
 
-変なリポジトリ名にしてしまったが、パッケージ名は暫定で Cenuncen を検討中。
 
 ## Web版
-https://k4170h.github.io/make-my-art-uncen/converter.html  
+https://k4170h.github.io/cenuncen/
 
 ## 簡単な使い方
 
